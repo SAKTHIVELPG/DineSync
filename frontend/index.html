@@ -506,8 +506,8 @@
           <span id="drawer-table-elapsed" class="text-base font-semibold text-cyan-400">34 minutes</span>
         </div>
 
-        <button id="drawer-reserve-button" onclick="ReservationController.open(TablesController.currentTableDetail)"
-                class="hidden w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+        <button id="drawer-reserve-button" type="button" onclick="ReservationController.open(TablesController.currentTableDetail); return false;"
+                class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
           <i data-lucide="calendar-check" class="w-4 h-4" aria-hidden="true"></i> Reserve this table
         </button>
 
@@ -1441,14 +1441,14 @@ void loop() {
   <div id="toast-container"></div>
 
   <!-- JavaScript Controllers -->
-  <script src="/static/js/websocket.js"></script>
-  <script src="/static/js/dashboard.js"></script>
-  <script src="/static/js/tables.js"></script>
-  <script src="/static/js/reservations.js"></script>
-  <script src="/static/js/queue.js"></script>
-  <script src="/static/js/ai_predictions.js"></script>
-  <script src="/static/js/analytics.js"></script>
-  <script src="/static/js/admin.js"></script>
-  <script src="/static/js/app.js"></script>
+  <script src="/static/js/websocket.js?v=83682c9"></script>
+  <script src="/static/js/dashboard.js?v=83682c9"></script>
+  <script src="/static/js/tables.js?v=83682c9"></script>
+  <script src="/static/js/reservations.js?v=83682c9"></script>
+  <script src="/static/js/queue.js?v=83682c9"></script>
+  <script src="/static/js/ai_predictions.js?v=83682c9"></script>
+  <script src="/static/js/analytics.js?v=83682c9"></script>
+  <script src="/static/js/admin.js?v=83682c9"></script>
+  <script src="/static/js/app.js?v=83682c9"></script>
 </body>
 </html>
