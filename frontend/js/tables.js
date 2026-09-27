@@ -222,7 +222,10 @@ const TablesController = {
       }
 
       const reserveButton = document.getElementById('drawer-reserve-button');
-      reserveButton?.classList.toggle('hidden', table.status !== 'AVAILABLE');
+      if (reserveButton) {
+        reserveButton.classList.remove('hidden');
+        reserveButton.innerHTML = `<i data-lucide="calendar-check" class="w-4 h-4" aria-hidden="true"></i> ${table.status === 'AVAILABLE' ? 'Reserve this table' : 'Check next available time'}`;
+      }
 
       drawer.classList.remove('translate-x-full');
       if (window.lucide) lucide.createIcons();

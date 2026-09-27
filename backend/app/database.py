@@ -128,6 +128,19 @@ def init_db():
     )
     """)
 
+    # Add scheduling fields when upgrading an existing local database.
+    reservation_columns = {row[1] for row in cursor.execute("PRAGMA table_info(reservations)").fetchall()}
+    for column, definition in {
+        "duration_hours": "INTEGER NOT NULL DEFAULT 2",
+        "start_at": "TEXT",
+        "end_at": "TEXT",
+    }.items():
+        if column not in reservation_columns:
+            cursor.execute(f"ALTER TABLE reservations ADD COLUMN {column} {definition}")
+
+    cursor.execute("UPDATE reservations SET start_at = reservation_date || 'T' || reservation_time WHERE start_at IS NULL")
+    cursor.execute("UPDATE reservations SET end_at = datetime(start_at, '+' || duration_hours || ' hours') WHERE end_at IS NULL")
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS notification_log (
         id INTEGER PRIMARY KEY AUTOINCREMENT,

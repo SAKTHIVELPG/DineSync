@@ -109,6 +109,7 @@ class ReservationRequest(BaseModel):
     party_size: int = Field(default=2, ge=1, le=16)
     reservation_date: str
     reservation_time: str
+    duration_hours: int = Field(default=2, ge=1, le=4)
 
 # --- Sensor Models ---
 class SensorTelemetryPayload(BaseModel):
