@@ -97,9 +97,9 @@ def get_table_details(table_id: int):
     cur = conn.cursor()
     cur.execute("SELECT * FROM tables WHERE id = ? OR table_number = ?", (table_id, table_id))
     row = cur.fetchone()
-    conn.close()
 
     if not row:
+        conn.close()
         raise HTTPException(status_code=404, detail="Table not found")
     
     t_dict = dict(row)
@@ -112,6 +112,7 @@ def get_table_details(table_id: int):
         (row["id"], datetime.now().isoformat()),
     ).fetchone()
     t_dict.update(dict(booking_summary))
+    conn.close()
     if t_dict.get("status") == "OCCUPIED" and t_dict.get("occupied_since"):
         try:
             occ_dt = datetime.fromisoformat(t_dict["occupied_since"])
