@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DINESYNC | Smart Restaurant IoT & AI Platform</title>
+
+  <script>
+    (function () {
+      const saved = localStorage.getItem('dinesync_theme');
+      const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+      document.documentElement.dataset.theme = saved || (prefersLight ? 'light' : 'dark');
+    }());
+  </script>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              main: '#0B0F17',
+              card: '#131B2A',
+              cardHover: '#1A2438',
+              cyan: '#06B6D4',
+              emerald: '#10B981',
+              rose: '#F43F5E',
+              amber: '#F59E0B',
+              purple: '#8B5CF6'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/css/custom.css">
+</head>
+<body class="min-h-screen flex flex-col bg-[#0B0F17] text-slate-200">
+
+  <!-- ================= TOP NAVIGATION BAR ================= -->
+  <header id="main-header" class="sticky top-0 z-50 glass-panel border-b border-white/10 px-4 lg:px-8 py-3.5 flex items-center justify-between transition-all duration-300">
+    <!-- Brand Logo -->
+    <div class="flex items-center gap-3 cursor-pointer" onclick="App.navigateToRoleHome()">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <i data-lucide="utensils-crossed" class="w-5 h-5 text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-lg tracking-wider text-white">DINE<span class="text-cyan-400">SYNC</span></span>
+          <span id="header-role-badge" class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">Customer Portal</span>
+        </div>
+        <p class="text-[10px] text-slate-400 tracking-wide">SMART RESTAURANT OCCUPANCY ENGINE</p>
+      </div>
+    </div>
+
+    <!-- Desktop Navigation: Customer Set -->
+    <nav id="nav-set-customer" class="hidden md:flex items-center gap-1.5 p-1 rounded-xl bg-slate-900/60 border border-white/5 text-xs font-medium">
+      <button id="nav-link-home" onclick="App.navigateTo('home')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="home" class="w-4 h-4"></i> Home
+      </button>
+      <button id="nav-link-dashboard" onclick="App.navigateTo('dashboard')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Live Seating
+      </button>
+      <button id="nav-link-tables" onclick="App.navigateTo('tables')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="grid-3x3" class="w-4 h-4"></i> Floor & Tables
+      </button>
+      <button id="nav-link-queue" onclick="App.navigateTo('queue')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="ticket" class="w-4 h-4"></i> Join Waitlist
+      </button>
+      <button id="nav-link-predictions" onclick="App.navigateTo('predictions')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="sparkles" class="w-4 h-4"></i> AI Wait Estimator
+      </button>
+    </nav>
+
+    <!-- Desktop Navigation: Admin Set (Shown when Staff is Authenticated) -->
+    <nav id="nav-set-admin" class="hidden items-center gap-1.5 p-1 rounded-xl bg-purple-950/40 border border-purple-500/20 text-xs font-medium">
+      <button id="nav-link-admin" onclick="App.navigateTo('admin')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="shield-check" class="w-4 h-4 text-purple-400"></i> Admin Console
+      </button>
+      <button id="nav-link-admin-tables" onclick="App.navigateTo('tables')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="grid-3x3" class="w-4 h-4"></i> 2D Floor Overrides
+      </button>
+      <button id="nav-link-admin-analytics" onclick="App.navigateTo('analytics')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="line-chart" class="w-4 h-4"></i> Analytics & Reports
+      </button>
+      <button id="nav-link-admin-predictions" onclick="App.navigateTo('predictions')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="cpu" class="w-4 h-4"></i> AI Models
+      </button>
+    </nav>
+
+    <!-- Right Header Controls: Role-Specific Action Buttons -->
+    <div class="flex items-center gap-2.5">
+      <!-- Live IoT Indicator -->
+      <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-white/10">
+        <span id="ws-status-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="ws-status-text" class="text-xs text-emerald-400 font-medium">Live IoT</span>
+      </div>
+
+      <button id="theme-toggle" type="button" onclick="App.toggleTheme()" aria-label="Switch to light theme" aria-pressed="false"
+              class="theme-toggle px-3 py-2 rounded-xl text-xs font-semibold border border-white/10 transition flex items-center gap-2">
+        <i data-lucide="sun" class="w-4 h-4" aria-hidden="true"></i><span class="hidden lg:inline">Light mode</span>
+      </button>
+
+      <!-- Customer Action Buttons -->
+      <div id="header-customer-actions" class="flex items-center gap-2">
+        <button onclick="App.navigateTo('login')" class="px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 transition flex items-center gap-1.5">
+          <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i> Staff Login
+        </button>
+        <button onclick="App.navigateTo('queue')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/25 transition flex items-center gap-1.5">
+          <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Join Waitlist
+        </button>
+      </div>
+
+      <!-- Admin Action Buttons (When Staff Logged In) -->
+      <div id="header-admin-actions" class="hidden items-center gap-2">
+        <span class="hidden md:inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-300 border border-purple-500/40 items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5 text-purple-400"></i> Manager Active
+        </span>
+        <button onclick="App.switchToCustomerView()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-white/10 transition flex items-center gap-1.5" title="Switch to Customer Guest View">
+          <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i> Guest View
+        </button>
+        <button onclick="AdminController.logout()" class="px-3 py-1.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-500/30 transition flex items-center gap-1.5">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Logout
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Mobile Navigation Bar -->
+  <div id="mobile-nav-customer" class="md:hidden glass-panel border-b border-white/10 px-3 py-2 flex items-center justify-around text-[11px] overflow-x-auto">
+    <button id="nav-mobile-home" onclick="App.navigateTo('home')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="home" class="w-4 h-4"></i><span>Home</span>
+    </button>
+    <button id="nav-mobile-dashboard" onclick="App.navigateTo('dashboard')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Seating</span>
+    </button>
+    <button id="nav-mobile-tables" onclick="App.navigateTo('tables')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="grid-3x3" class="w-4 h-4"></i><span>Floor</span>
+    </button>
+    <button id="nav-mobile-queue" onclick="App.navigateTo('queue')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="ticket" class="w-4 h-4"></i><span>Waitlist</span>
+    </button>
+    <button id="nav-mobile-predictions" onclick="App.navigateTo('predictions')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="sparkles" class="w-4 h-4"></i><span>AI</span>
+    </button>
+    <button id="nav-mobile-login" onclick="App.navigateTo('login')" class="p-1.5 flex flex-col items-center gap-0.5 text-purple-400">
+      <i data-lucide="lock" class="w-4 h-4"></i><span>Login</span>
+    </button>
+  </div>
+
+  <div id="mobile-nav-admin" class="hidden md:hidden glass-panel border-b border-purple-500/20 px-3 py-2 items-center justify-around text-[11px] overflow-x-auto bg-purple-950/40">
+    <button onclick="App.navigateTo('admin')" class="p-1.5 flex flex-col items-center gap-0.5 text-purple-300">
+      <i data-lucide="shield-check" class="w-4 h-4"></i><span>Console</span>
+    </button>
+    <button onclick="App.navigateTo('tables')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="grid-3x3" class="w-4 h-4"></i><span>Floor</span>
+    </button>
+    <button onclick="App.navigateTo('analytics')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="line-chart" class="w-4 h-4"></i><span>Analytics</span>
+    </button>
+    <button onclick="App.navigateTo('predictions')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="cpu" class="w-4 h-4"></i><span>AI</span>
+    </button>
+    <button onclick="AdminController.logout()" class="p-1.5 flex flex-col items-center gap-0.5 text-rose-400">
+      <i data-lucide="log-out" class="w-4 h-4"></i><span>Logout</span>
+    </button>
+  </div>
+
+  <!-- ================= MAIN CONTENT CONTAINER ================= -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
+
+    <!-- ================= VIEW 1: HOME ================= -->
+    <section id="view-home" class="space-y-8">
+      <!-- Hero Banner -->
+      <div class="relative rounded-3xl overflow-hidden glass-card p-8 lg:p-12 border border-cyan-500/20">
+        <div class="absolute -right-16 -top-16 w-80 h-80 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-16 -bottom-16 w-80 h-80 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-3xl space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></span>
+            ESP32 Ultrasonic & AI Wait-Time Engine Active
+          </div>
+          <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
+            Intelligent Table Sensing & <br><span class="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-blue-400">Real-Time Dining Synchronization</span>
+          </h1>
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            DINESYNC modernizes restaurant hospitality through IoT ultrasonic occupancy hardware nodes, zero-latency WebSocket floor tracking, and machine-learning wait-time predictions.
+          </p>
+
+          <!-- Quick Pulse Numbers -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-4">
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <span class="text-xs text-slate-400 block">Open Tables</span>
+              <span id="home-stat-avail" class="text-xl font-bold text-emerald-400">Loading...</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <span class="text-xs text-slate-400 block">Waitlist Length</span>
+              <span id="home-stat-queue" class="text-xl font-bold text-cyan-400">3 Parties</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <span class="text-xs text-slate-400 block">Est. Walk-In Wait</span>
+              <span id="home-stat-wait" class="text-xl font-bold text-amber-400">~12 mins</span>
+            </div>
+            <div class="p-3.5 rounded-xl bg-slate-900/60 border border-white/5">
+              <span class="text-xs text-slate-400 block">IoT Sensor Fleet</span>
+              <span id="home-stat-sensors" class="text-xl font-bold text-purple-400">16 Online</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-4">
+            <button onclick="App.navigateTo('dashboard')" class="px-6 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm shadow-lg shadow-cyan-500/25 transition flex items-center gap-2">
+              <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Launch Live Floor
+            </button>
+            <button onclick="App.navigateTo('predictions')" class="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-white/10 transition flex items-center gap-2">
+              <i data-lucide="sparkles" class="w-4 h-4 text-cyan-400"></i> AI Wait Prediction
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Feature Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div onclick="App.navigateTo('tables')" class="glass-card p-6 cursor-pointer space-y-3 border-t-2 border-t-emerald-500">
+          <div class="w-12 h-12 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
+            <i data-lucide="radio" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">ESP32 IoT Sensing</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Real-time proximity detection with debounce filtering automatically marks tables occupied the second guests sit down.
+          </p>
+          <span class="text-xs text-emerald-400 font-semibold flex items-center gap-1">Explore Floor Plan →</span>
+        </div>
+
+        <div onclick="App.navigateTo('queue')" class="glass-card p-6 cursor-pointer space-y-3 border-t-2 border-t-cyan-500">
+          <div class="w-12 h-12 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center">
+            <i data-lucide="ticket" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">Live Digital Waitlist</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Contactless queue tickets with dynamic countdown ETA, live queue position, and instant table-ready alerts.
+          </p>
+          <span class="text-xs text-cyan-400 font-semibold flex items-center gap-1">Join Waitlist →</span>
+        </div>
+
+        <div onclick="App.navigateTo('predictions')" class="glass-card p-6 cursor-pointer space-y-3 border-t-2 border-t-purple-500">
+          <div class="w-12 h-12 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center">
+            <i data-lucide="cpu" class="w-6 h-6"></i>
+          </div>
+          <h3 class="text-lg font-bold text-white">AI Forecasting Engine</h3>
+          <p class="text-xs text-slate-400 leading-relaxed">
+            Machine-learning regression predicting wait times by party size, turnover velocity, and 7-day rush hour heatmaps.
+          </p>
+          <span class="text-xs text-purple-400 font-semibold flex items-center gap-1">View AI Models →</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 2: LIVE DASHBOARD ================= -->
+    <section id="view-dashboard" class="space-y-6 hidden">
+      <!-- Section Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Live Floor Dashboard</h2>
+          <p class="text-xs text-slate-400">Real-time table occupancy, IoT hardware telemetry, and capacity gauge</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="DashboardController.fetchAndRenderStats(); DashboardController.fetchAndRenderMiniFloor();" 
+                  class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-white/10 flex items-center gap-1.5 transition">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
+          </button>
+          <button onclick="App.navigateTo('tables')" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition">
+            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Interactive Floor Plan
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <!-- Available Tables -->
+        <div class="glass-card p-5 border-l-4 border-l-emerald-500">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Available</span>
+            <span class="p-2 rounded-lg bg-emerald-500/10 text-emerald-400"><i data-lucide="check-circle" class="w-4 h-4"></i></span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span id="stat-available-tables" class="text-3xl font-extrabold text-white">0</span>
+            <span class="text-xs text-emerald-400 font-semibold">Ready to Seat</span>
+          </div>
+        </div>
+
+        <!-- Occupied Tables -->
+        <div class="glass-card p-5 border-l-4 border-l-rose-500">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Occupied</span>
+            <span class="p-2 rounded-lg bg-rose-500/10 text-rose-400"><i data-lucide="users" class="w-4 h-4"></i></span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span id="stat-occupied-tables" class="text-3xl font-extrabold text-white">0</span>
+            <span class="text-xs text-rose-400 font-semibold">Active Dining</span>
+          </div>
+        </div>
+
+        <!-- Total Tables -->
+        <div class="glass-card p-5 border-l-4 border-l-cyan-500">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Fleet</span>
+            <span class="p-2 rounded-lg bg-cyan-500/10 text-cyan-400"><i data-lucide="grid-3x3" class="w-4 h-4"></i></span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span id="stat-total-tables" class="text-3xl font-extrabold text-white">16</span>
+            <span class="text-xs text-slate-400">Tables</span>
+          </div>
+        </div>
+
+        <!-- Seated Guests Capacity -->
+        <div class="glass-card p-5 border-l-4 border-l-purple-500">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Seated Guests</span>
+            <span class="p-2 rounded-lg bg-purple-500/10 text-purple-400"><i data-lucide="armchair" class="w-4 h-4"></i></span>
+          </div>
+          <div class="mt-3 flex items-baseline gap-2">
+            <span id="stat-seated-capacity" class="text-2xl font-extrabold text-white">32 / 72</span>
+            <span class="text-xs text-slate-400">Seats</span>
+          </div>
+        </div>
+
+        <!-- Occupancy Rate Radial Gauge -->
+        <div class="glass-card p-4 flex items-center justify-between">
+          <div class="space-y-1">
+            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider block">Occupancy</span>
+            <span id="stat-occupancy-rate" class="text-2xl font-extrabold text-white">0%</span>
+            <div id="stat-rush-tag" class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 inline-block">
+              Normal
+            </div>
+          </div>
+          <div class="relative w-16 h-16 shrink-0">
+            <svg class="w-16 h-16 radial-progress" viewBox="0 0 100 100">
+              <circle class="radial-progress-bg" cx="50" cy="50" r="45" stroke-width="9" fill="none"></circle>
+              <circle id="radial-gauge-circle" class="radial-progress-val" cx="50" cy="50" r="45" stroke-width="9" fill="none" stroke="#10B981"></circle>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Live Floor & Activity Log Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Mini Floor Snapshot -->
+        <div class="lg:col-span-2 glass-panel p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-lg font-bold text-white">Live Table Grid</h3>
+              <p class="text-xs text-slate-400">Instant color-coded status updated via WebSocket</p>
+            </div>
+            <div class="flex items-center gap-3 text-[11px]">
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span> Available</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span> Occupied</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Reserved</span>
+              <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-purple-400"></span> Cleaning</span>
+            </div>
+          </div>
+
+          <!-- Mini Floor Grid Container -->
+          <div id="mini-floor-grid" class="grid grid-cols-2 sm:grid-cols-4 gap-3.5 pt-2">
+            <!-- Dynamic Table Cards inserted by dashboard.js -->
+          </div>
+        </div>
+
+        <!-- Live Sensor Activity Stream -->
+        <div class="glass-panel p-6 space-y-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-2 border-b border-white/5">
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i data-lucide="radio" class="w-4 h-4 text-cyan-400"></i> Live Activity Feed
+              </h3>
+              <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            </div>
+            
+            <div id="activity-stream-list" class="mt-4 space-y-2 max-h-[380px] overflow-y-auto pr-1">
+              <!-- Activity log entries inserted here -->
+            </div>
+          </div>
+
+          <div class="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-slate-400">
+            <span>Hardware Debounce: 3 Samples</span>
+            <span class="font-mono text-cyan-400">REST + WS</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 3: TABLES & FLOOR PLAN ================= -->
+    <section id="view-tables" class="space-y-6 hidden">
+      <!-- Header & View Controls -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Restaurant Floor Plan & Tables</h2>
+          <p class="text-xs text-slate-400">Interactive 2D spatial seating map and linked ESP32 sensor telemetry</p>
+        </div>
+
+        <!-- View Controls & Filters -->
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- View Toggle -->
+          <div class="p-1 rounded-xl bg-slate-900/80 border border-white/10 flex items-center gap-1 text-xs">
+            <button id="btn-view-plan" onclick="TablesController.setView('plan')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-semibold transition">
+              2D Floor Plan
+            </button>
+            <button id="btn-view-grid" onclick="TablesController.setView('grid')" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white transition">
+              Card Grid
+            </button>
+          </div>
+
+          <!-- Section Filter -->
+          <select onchange="TablesController.setFilter('section', this.value)" class="bg-slate-900 border border-white/10 text-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+            <option value="All">All Sections</option>
+            <option value="Main Dining">Main Dining</option>
+            <option value="Patio">Patio</option>
+            <option value="Window View">Window View</option>
+            <option value="Bar Lounge">Bar Lounge</option>
+            <option value="VIP Booth">VIP Booth</option>
+          </select>
+
+          <!-- Capacity Filter -->
+          <select onchange="TablesController.setFilter('capacity', this.value)" class="bg-slate-900 border border-white/10 text-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+            <option value="0">Any Capacity</option>
+            <option value="2">2+ Guests</option>
+            <option value="4">4+ Guests</option>
+            <option value="6">6+ Guests</option>
+            <option value="8">8+ Guests</option>
+          </select>
+
+          <!-- Status Filter -->
+          <select onchange="TablesController.setFilter('status', this.value)" class="bg-slate-900 border border-white/10 text-slate-300 rounded-xl px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+            <option value="All">All Statuses</option>
+            <option value="AVAILABLE">Available</option>
+            <option value="OCCUPIED">Occupied</option>
+            <option value="RESERVED">Reserved</option>
+            <option value="CLEANING">Cleaning</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- 2D Floor Plan Canvas View -->
+      <div id="tables-plan-view" class="floorplan-container floor-grid-bg p-6 relative overflow-x-auto">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between text-xs text-slate-400 mb-4 gap-2 min-w-[840px]">
+          <div class="flex flex-wrap items-center gap-2 sm:gap-4">
+            <span class="font-bold text-white">Zone Legend:</span>
+            <span class="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">Window (Left)</span>
+            <span class="px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">Main Dining (Center)</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Patio (Right Top)</span>
+            <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">VIP (Right Bottom)</span>
+          </div>
+          <span class="text-slate-500 italic">Click any table to view live sensor telemetry & status overrides</span>
+        </div>
+
+        <!-- Floor Plan Absolute Container -->
+        <div id="floorplan-canvas" class="relative min-w-[840px] w-full h-[580px]">
+          <!-- Dynamic 2D Table elements rendered by tables.js -->
+        </div>
+      </div>
+
+      <!-- Card Grid View (Hidden by default) -->
+      <div id="tables-grid-view" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 hidden">
+        <!-- Dynamic Cards rendered by tables.js -->
+      </div>
+    </section>
+
+    <!-- Slide-over Table Details Drawer (Global for Tables & Dashboard) -->
+    <div id="table-detail-drawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-slate-900/95 border-l border-white/10 shadow-2xl p-6 transform translate-x-full transition-transform duration-300 ease-in-out backdrop-blur-xl flex flex-col justify-between overflow-y-auto">
+      <div class="space-y-6">
+        <!-- Drawer Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-white/10">
+          <div>
+            <h3 id="drawer-table-title" class="text-xl font-bold text-white">Table 4 (Main Dining)</h3>
+            <p id="drawer-table-capacity" class="text-xs text-slate-400">4 Guests (rect layout)</p>
+          </div>
+          <button onclick="TablesController.closeDrawer()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Current Table Status -->
+        <div class="p-4 rounded-xl bg-slate-800/60 border border-white/5 flex items-center justify-between">
+          <div>
+            <span class="text-xs text-slate-400 block">Current Status</span>
+            <span id="drawer-table-status" class="text-lg font-bold text-white">OCCUPIED</span>
+          </div>
+          <span id="drawer-status-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30">
+            Occupied
+          </span>
+        </div>
+
+        <div class="p-4 rounded-xl bg-slate-800/60 border border-white/5">
+          <span class="text-xs text-slate-400 block">Dining Duration / Vacancy</span>
+          <span id="drawer-table-elapsed" class="text-base font-semibold text-cyan-400">34 minutes</span>
+        </div>
+
+        <button id="drawer-reserve-button" onclick="ReservationController.open(TablesController.currentTableDetail)"
+                class="hidden w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
+          <i data-lucide="calendar-check" class="w-4 h-4" aria-hidden="true"></i> Reserve this table
+        </button>
+
+        <!-- ESP32 IoT Sensor Telemetry Card -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+              <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i> ESP32 Sensor Telemetry
+            </h4>
+            <span class="text-[10px] font-mono text-cyan-400" id="drawer-sensor-id">ESP32-NODE-04</span>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-950/80 border border-cyan-500/20 space-y-3 text-xs">
+            <div class="flex justify-between items-center">
+              <span class="text-slate-400">Battery Level</span>
+              <div class="flex items-center gap-2">
+                <span id="drawer-sensor-battery" class="font-bold text-emerald-400">92%</span>
+                <div class="w-16 h-2 rounded-full bg-slate-800 overflow-hidden">
+                  <div id="drawer-sensor-battery-bar" class="h-full bg-emerald-400" style="width: 92%;"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex justify-between">
+              <span class="text-slate-400">Signal RSSI</span>
+              <span id="drawer-sensor-rssi" class="font-mono text-white">-52 dBm (Strong)</span>
+            </div>
+
+            <div class="flex justify-between">
+              <span class="text-slate-400">Ultrasonic Distance</span>
+              <span id="drawer-sensor-dist" class="font-bold text-cyan-400">24.5 cm (Customer Seated)</span>
+            </div>
+
+            <div class="flex justify-between">
+              <span class="text-slate-400">Last Telemetry Ping</span>
+              <span id="drawer-sensor-ping" class="text-slate-400">Active</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Manual Status Overrides -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Manual Status Override</h4>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <button onclick="TablesController.updateCurrentTableStatus('AVAILABLE')" class="py-2 px-3 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 font-semibold border border-emerald-500/30 transition">
+              Mark Available
+            </button>
+            <button onclick="TablesController.updateCurrentTableStatus('OCCUPIED')" class="py-2 px-3 rounded-lg bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 font-semibold border border-rose-500/30 transition">
+              Mark Occupied
+            </button>
+            <button onclick="TablesController.updateCurrentTableStatus('RESERVED')" class="py-2 px-3 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-semibold border border-amber-500/30 transition">
+              Mark Reserved
+            </button>
+            <button onclick="TablesController.updateCurrentTableStatus('CLEANING')" class="py-2 px-3 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 font-semibold border border-purple-500/30 transition">
+              Mark Cleaning
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Hardware Simulator Actions -->
+        <div class="space-y-2 pt-2 border-t border-white/5">
+          <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1">
+            <i data-lucide="zap" class="w-3.5 h-3.5"></i> Test Hardware Simulation
+          </h4>
+          <div class="flex gap-2 text-xs">
+            <button onclick="TablesController.simulateSensorOnCurrentTable('OCCUPY')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 font-medium">
+              🚶‍♂️ Simulate Sit Down
+            </button>
+            <button onclick="TablesController.simulateSensorOnCurrentTable('VACATE')" class="flex-1 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-white/10 font-medium">
+              🚶‍♀️ Simulate Leave
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <button onclick="TablesController.closeDrawer()" class="w-full mt-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition">
+        Close Details
+      </button>
+    </div>
+
+    <!-- ================= VIEW 4: JOIN QUEUE & LIVE TRACKER ================= -->
+    <section id="view-queue" class="space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Guest Waitlist & Digital Queue</h2>
+          <p class="text-xs text-slate-400">Contactless table waitlist with dynamic AI countdown & table ready alerts</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Guest Registration Form -->
+        <div class="lg:col-span-5 glass-panel p-6 space-y-5">
+          <div class="border-b border-white/10 pb-3">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="ticket-plus" class="w-5 h-5 text-cyan-400"></i> Join the Waitlist
+            </h3>
+            <p class="text-xs text-slate-400">No physical buzzer needed. Receive live status on your device.</p>
+          </div>
+
+          <form id="queue-registration-form" onsubmit="QueueController.handleJoinQueue(event)" class="space-y-4 text-xs">
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Your Full Name *</label>
+              <input type="text" id="queue-customer-name" required placeholder="e.g. Marcus Vance" 
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Phone Number *</label>
+                <input type="tel" id="queue-phone" required placeholder="+1 555-0143" 
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Party Size *</label>
+                <select id="queue-party-size" onchange="QueueController.updatePreviewWaitTime()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                  <option value="1">1 Guest</option>
+                  <option value="2" selected>2 Guests</option>
+                  <option value="3">3 Guests</option>
+                  <option value="4">4 Guests</option>
+                  <option value="5">5 Guests</option>
+                  <option value="6">6 Guests</option>
+                  <option value="8">8 Guests (Large Group)</option>
+                  <option value="10">10+ Guests</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Section Preference</label>
+                <select id="queue-preferred-section" onchange="QueueController.updatePreviewWaitTime()" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                  <option value="Any">First Available</option>
+                  <option value="Main Dining">Main Dining</option>
+                  <option value="Patio">Patio (Outdoor)</option>
+                  <option value="Window View">Window View</option>
+                  <option value="Bar Lounge">Bar Lounge</option>
+                  <option value="VIP Booth">VIP Booth</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Email (Optional)</label>
+                <input type="email" id="queue-email" placeholder="for notification" 
+                       class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Special Requests / High Chair</label>
+              <input type="text" id="queue-notes" placeholder="e.g. Birthday, Booster seat needed" 
+                     class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+            </div>
+
+            <!-- Dynamic AI Wait Prediction Preview Box -->
+            <div class="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 flex items-center justify-between">
+              <div>
+                <span class="text-[11px] text-cyan-400 font-bold block">AI Predicted Wait Time:</span>
+                <span id="queue-preview-wait-text" class="text-xs font-semibold text-white">Calculating...</span>
+              </div>
+              <i data-lucide="sparkles" class="w-5 h-5 text-cyan-400"></i>
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 transition">
+              🎟️ Get Digital Queue Ticket
+            </button>
+          </form>
+        </div>
+
+        <!-- Active Digital Ticket & Public Board -->
+        <div class="lg:col-span-7 space-y-6">
+          <!-- Active Ticket Card -->
+          <div id="active-ticket-card" class="ticket-glow rounded-2xl p-6 space-y-5 hidden">
+            <div class="flex items-start justify-between">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30">
+                  ACTIVE LIVE TICKET
+                </span>
+                <h3 id="ticket-code-display" class="text-3xl font-extrabold text-white mt-1">Q-104</h3>
+                <p id="ticket-guest-name" class="text-sm font-semibold text-slate-300">Marcus Vance (Party of 2)</p>
+                <span id="ticket-section-pref" class="text-xs text-slate-400">Section: Any</span>
+              </div>
+
+              <div class="text-right">
+                <span class="text-xs text-slate-400 block">Queue Position</span>
+                <span id="ticket-position-display" class="text-4xl font-extrabold text-cyan-400">#2</span>
+              </div>
+            </div>
+
+            <!-- Status Banner -->
+            <div id="ticket-status-banner" class="p-4 rounded-xl bg-slate-800/80 border border-white/10 text-slate-300">
+              <p id="ticket-status-text" class="text-xs">
+                ⏳ In Line: <strong>2 parties ahead</strong>. We will alert you the moment a table is prepared!
+              </p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 py-3 border-y border-white/10 text-xs">
+              <div>
+                <span class="text-slate-400 block">Dynamic Estimated Wait</span>
+                <span id="ticket-est-wait" class="text-lg font-bold text-white">~8 mins</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block">Live Telemetry Status</span>
+                <span class="text-emerald-400 font-semibold flex items-center gap-1">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Auto-Allocating
+                </span>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-[11px] text-slate-500">Keep this screen open for automatic chime alert</span>
+              <button onclick="QueueController.cancelActiveTicket()" class="text-xs text-rose-400 hover:text-rose-300 underline font-medium">
+                Leave Waitlist
+              </button>
+            </div>
+          </div>
+
+          <!-- Placeholder when no active ticket -->
+          <div id="no-ticket-placeholder" class="glass-panel p-8 text-center space-y-3">
+            <div class="w-12 h-12 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center mx-auto">
+              <i data-lucide="ticket" class="w-6 h-6"></i>
+            </div>
+            <h4 class="text-base font-bold text-white">No Active Ticket Registered</h4>
+            <p class="text-xs text-slate-400 max-w-sm mx-auto">
+              Fill out the form on the left to join the live waitlist and receive real-time table turnover updates.
+            </p>
+          </div>
+
+          <!-- Public Waitlist Board -->
+          <div class="glass-panel p-6 space-y-4">
+            <div class="flex items-center justify-between pb-2 border-b border-white/5">
+              <div>
+                <h3 class="text-base font-bold text-white">Live Public Waitlist Board</h3>
+                <p class="text-xs text-slate-400">Real-time party line and called statuses</p>
+              </div>
+              <span class="text-xs text-cyan-400 font-mono">Syncing live</span>
+            </div>
+
+            <div id="public-queue-list" class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+              <!-- Rendered by queue.js -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 5: AI PREDICTIONS ================= -->
+    <section id="view-predictions" class="space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">AI Prediction & Rush Hour Engine</h2>
+          <p class="text-xs text-slate-400">Scikit-Learn dynamic wait time regression & 24/7 occupancy forecasting</p>
+        </div>
+        <div class="px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold flex items-center gap-1.5">
+          <i data-lucide="sparkles" class="w-4 h-4"></i> Trained on 30-Day Turnover Data
+        </div>
+      </div>
+
+      <!-- Rush Windows & Current Status Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-4 space-y-1">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Current Restaurant Load</span>
+          <span id="peak-current-rate" class="text-xl font-bold text-cyan-400">Loading...</span>
+        </div>
+        <div class="glass-card p-4 space-y-1">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Next Expected Rush</span>
+          <span id="peak-next-rush" class="text-sm font-bold text-amber-400">Dinner Rush</span>
+        </div>
+        <div class="glass-card p-4 space-y-1">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Lunch Rush Window</span>
+          <span id="peak-lunch-window" class="text-sm font-bold text-white">12:00 PM - 2:30 PM</span>
+        </div>
+        <div class="glass-card p-4 space-y-1">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Dinner Rush Window</span>
+          <span id="peak-dinner-window" class="text-sm font-bold text-white">6:30 PM - 9:00 PM</span>
+        </div>
+      </div>
+
+      <!-- Interactive AI Wait-Time Simulator & 24h Curve -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Interactive Simulator Form -->
+        <div class="lg:col-span-5 glass-panel p-6 space-y-5">
+          <div class="border-b border-white/10 pb-3">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="sliders" class="w-5 h-5 text-cyan-400"></i> Wait Time Simulator
+            </h3>
+            <p class="text-xs text-slate-400">Simulate guest arrival scenarios and evaluate ML predictions</p>
+          </div>
+
+          <div class="space-y-4 text-xs">
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Party Size (Guests)</label>
+              <select id="ai-sim-party-size" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                <option value="2">2 Guests (Couple)</option>
+                <option value="4" selected>4 Guests (Standard Family)</option>
+                <option value="6">6 Guests (Large Party)</option>
+                <option value="8">8 Guests (VIP Group)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Preferred Section</label>
+              <select id="ai-sim-section" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                <option value="Any">Any Section</option>
+                <option value="Main Dining">Main Dining</option>
+                <option value="Patio">Patio</option>
+                <option value="Window View">Window View</option>
+                <option value="Bar Lounge">Bar Lounge</option>
+                <option value="VIP Booth">VIP Booth</option>
+              </select>
+            </div>
+
+            <div>
+              <div class="flex justify-between items-center mb-1">
+                <label class="text-slate-300 font-semibold">Arrival Time of Day</label>
+                <span id="ai-sim-hour-val" class="font-bold text-cyan-400 font-mono">07:00 PM</span>
+              </div>
+              <input type="range" id="ai-sim-hour" min="11" max="23" value="19" class="w-full accent-cyan-400">
+              <div class="flex justify-between text-[10px] text-slate-500 mt-1">
+                <span>11 AM</span>
+                <span>2 PM (Lunch)</span>
+                <span>7 PM (Dinner)</span>
+                <span>11 PM</span>
+              </div>
+            </div>
+
+            <div>
+              <label class="text-slate-300 font-semibold block mb-1">Day of Week</label>
+              <select id="ai-sim-day" class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+                <option value="5" selected>Saturday (Weekend Peak)</option>
+                <option value="6">Sunday</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- ML Prediction Result Card -->
+          <div class="ticket-glow rounded-xl p-5 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs text-slate-400 uppercase tracking-wider">AI Predicted Wait</span>
+              <span id="ai-pred-confidence" class="px-2 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-400">92% Confidence</span>
+            </div>
+
+            <div class="flex items-baseline gap-2">
+              <span id="ai-pred-wait-mins" class="text-4xl font-extrabold text-white">-- min</span>
+              <span id="ai-pred-wait-range" class="text-xs text-slate-400">Estimated Range: --</span>
+            </div>
+
+            <p id="ai-pred-recommendation" class="text-xs text-slate-300 italic pt-1 border-t border-white/10">
+              Loading recommendation...
+            </p>
+
+            <!-- Factors Breakdown -->
+            <div id="ai-pred-factors-list" class="space-y-1 pt-2 text-xs">
+              <!-- Injected by ai_predictions.js -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 24-Hour Occupancy Forecast Curve Chart -->
+        <div class="lg:col-span-7 glass-panel p-6 space-y-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+              <div>
+                <h3 class="text-lg font-bold text-white">24-Hour Occupancy Curve</h3>
+                <p class="text-xs text-slate-400">Predicted capacity load & table turnover across operating hours</p>
+              </div>
+              <span class="text-xs text-cyan-400 font-semibold">11 AM - 11 PM</span>
+            </div>
+
+            <div class="h-80 w-full mt-4">
+              <canvas id="ai-occupancy-forecast-chart"></canvas>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-4 border-t border-white/10 text-xs text-slate-400">
+            <div>
+              <span class="block font-semibold text-white">Lunch Peak</span>
+              <span>12:00 PM - 2:00 PM (~75% Occ)</span>
+            </div>
+            <div>
+              <span class="block font-semibold text-white">Dinner Rush</span>
+              <span>7:00 PM - 9:00 PM (~90% Occ)</span>
+            </div>
+            <div>
+              <span class="block font-semibold text-white">Best Low-Wait Times</span>
+              <span class="text-emerald-400">3:00 PM - 5:30 PM</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7-Day x 24-Hour Rush Congestion Heatmap -->
+      <div class="glass-panel p-6 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-white/10">
+          <div>
+            <h3 class="text-lg font-bold text-white">7-Day Hourly Peak Congestion Heatmap</h3>
+            <p class="text-xs text-slate-400">Visual occupancy density matrix to plan optimal dining schedules</p>
+          </div>
+          <div class="flex items-center gap-3 text-[11px]">
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500"></span> &lt;45% Light</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-blue-500/50 border border-blue-500"></span> 45-70% Moderate</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-amber-500/70 border border-amber-500"></span> 70-85% High</span>
+            <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded bg-rose-500/90 border border-rose-500"></span> &gt;85% Peak Rush</span>
+          </div>
+        </div>
+
+        <div id="ai-heatmap-grid" class="overflow-x-auto pt-2">
+          <!-- Injected by ai_predictions.js -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 6: ANALYTICS ================= -->
+    <section id="view-analytics" class="space-y-6 hidden">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-extrabold text-white">Historical Analytics & Reports</h2>
+          <p class="text-xs text-slate-400">Turnover velocity, wait-time accuracy, and dining session analytics</p>
+        </div>
+        <button onclick="AnalyticsController.exportCSV()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold text-xs border border-cyan-500/30 transition flex items-center gap-1.5">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV Data
+        </button>
+      </div>
+
+      <!-- Top Summary Metrics -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="glass-card p-5">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Total Parties Seated</span>
+          <span id="an-total-seated" class="text-3xl font-extrabold text-white mt-1 block">0</span>
+          <span class="text-[11px] text-emerald-400">Historical Dining Sessions</span>
+        </div>
+        <div class="glass-card p-5">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Avg Dining Duration</span>
+          <span id="an-avg-duration" class="text-3xl font-extrabold text-cyan-400 mt-1 block">52m</span>
+          <span class="text-[11px] text-slate-400">Per table turn</span>
+        </div>
+        <div class="glass-card p-5">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Avg Queue Wait</span>
+          <span id="an-avg-wait" class="text-3xl font-extrabold text-amber-400 mt-1 block">14m</span>
+          <span class="text-[11px] text-slate-400">From join to seat</span>
+        </div>
+        <div class="glass-card p-5">
+          <span class="text-xs text-slate-400 uppercase tracking-wider block">Peak Occupancy Reached</span>
+          <span id="an-peak-occupancy" class="text-3xl font-extrabold text-rose-400 mt-1 block">88%</span>
+          <span class="text-[11px] text-slate-400">Max recorded rush load</span>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Hourly Occupancy & Queue Depth -->
+        <div class="glass-panel p-6 space-y-4">
+          <h3 class="text-lg font-bold text-white">Occupancy & Queue Depth History</h3>
+          <div class="h-72 w-full">
+            <canvas id="an-occupancy-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Actual Wait vs AI Predicted Wait Accuracy -->
+        <div class="glass-panel p-6 space-y-4">
+          <h3 class="text-lg font-bold text-white">AI Wait Prediction Accuracy</h3>
+          <div class="h-72 w-full">
+            <canvas id="an-wait-accuracy-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Section Popularity Breakdown -->
+        <div class="glass-panel p-6 space-y-4">
+          <h3 class="text-lg font-bold text-white">Section Preference & Popularity</h3>
+          <div class="h-64 w-full flex items-center justify-center">
+            <canvas id="an-section-chart"></canvas>
+          </div>
+        </div>
+
+        <!-- Party Size Distribution -->
+        <div class="glass-panel p-6 space-y-4">
+          <h3 class="text-lg font-bold text-white">Party Size Distribution</h3>
+          <div class="h-64 w-full">
+            <canvas id="an-party-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW: DEDICATED LOGIN PORTAL ================= -->
+    <section id="view-login" class="space-y-6 hidden max-w-xl mx-auto py-6">
+      <div class="text-center space-y-2">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-xs font-semibold">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Secure Unified Portal
+        </div>
+        <h2 class="text-3xl font-extrabold text-white tracking-tight">DINESYNC Portal Sign-In</h2>
+        <p class="text-xs text-slate-400">Select your role to access management tools or track your guest waitlist ticket.</p>
+      </div>
+
+      <!-- Portal Role Tabs Switcher -->
+      <div class="glass-panel p-1.5 flex rounded-2xl border border-white/10 text-xs font-semibold">
+        <button id="login-tab-btn-staff" onclick="App.setLoginTab('staff')" class="flex-1 py-2.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 transition flex items-center justify-center gap-2">
+          <i data-lucide="shield" class="w-4 h-4"></i> Staff / Manager Console
+        </button>
+        <button id="login-tab-btn-guest" onclick="App.setLoginTab('guest')" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-2">
+          <i data-lucide="ticket" class="w-4 h-4"></i> Guest Ticket Lookup
+        </button>
+      </div>
+
+      <!-- Tab Content 1: Staff / Manager Login -->
+      <div id="login-tab-staff" class="glass-panel p-8 space-y-6 border border-purple-500/30">
+        <div class="flex items-center gap-4 pb-4 border-b border-white/10">
+          <div class="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-400 flex items-center justify-center border border-purple-500/30 shrink-0">
+            <i data-lucide="lock" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Manager & Staff Authentication</h3>
+            <p class="text-xs text-slate-400">Unlock host stand queue board, IoT telemetry diagnostics, and table controls</p>
+          </div>
+        </div>
+
+        <form onsubmit="event.preventDefault(); AdminController.login(document.getElementById('login-staff-pin-input').value);" class="space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1.5">Staff Security PIN *</label>
+            <input type="password" id="login-staff-pin-input" required placeholder="Enter PIN (Demo: 1234)" maxlength="8"
+                   class="w-full text-center text-2xl tracking-widest font-mono py-3.5 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-purple-500 transition">
+          </div>
+
+          <div class="flex items-center justify-between text-xs pt-1">
+            <span class="text-slate-400">Default Demo PIN: <code class="text-purple-400 font-mono font-bold">1234</code></span>
+            <button type="button" onclick="document.getElementById('login-staff-pin-input').value = '1234';" class="text-purple-400 hover:underline">
+              Auto-fill PIN
+            </button>
+          </div>
+
+          <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-purple-500/25 transition flex items-center justify-center gap-2">
+            <i data-lucide="unlock" class="w-4 h-4"></i> Unlock Manager Console
+          </button>
+        </form>
+
+        <div class="pt-4 border-t border-white/5 flex items-center justify-between text-[11px] text-slate-500">
+          <span>Protected by DINESYNC Token Session</span>
+          <span class="font-mono text-purple-400">v2.1 Staff Auth</span>
+        </div>
+      </div>
+
+      <!-- Tab Content 2: Guest / Customer Ticket Lookup -->
+      <div id="login-tab-guest" class="glass-panel p-8 space-y-6 border border-cyan-500/30 hidden">
+        <div class="flex items-center gap-4 pb-4 border-b border-white/10">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/30 shrink-0">
+            <i data-lucide="ticket" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Find Your Live Waitlist Ticket</h3>
+            <p class="text-xs text-slate-400">Track your queue position, estimated seating time, and audio alerts</p>
+          </div>
+        </div>
+
+        <form onsubmit="event.preventDefault(); QueueController.handleLookupTicket(document.getElementById('guest-lookup-phone-input').value);" class="space-y-4">
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1.5">Phone Number or Ticket Code *</label>
+            <input type="text" id="guest-lookup-phone-input" required placeholder="e.g. +1 555-0143 or Q-101"
+                   class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500 transition">
+          </div>
+
+          <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 transition flex items-center justify-center gap-2">
+            <i data-lucide="search" class="w-4 h-4"></i> Retrieve & Track Live Ticket
+          </button>
+        </form>
+
+        <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 text-center text-xs text-slate-400 space-y-2">
+          <p>Not currently registered on the restaurant waitlist?</p>
+          <button onclick="App.navigateTo('queue')" class="text-cyan-400 hover:underline font-semibold flex items-center justify-center gap-1 mx-auto">
+            <span>Join Waitlist here</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= VIEW 7: ADMIN CONSOLE ================= -->
+    <section id="view-admin" class="space-y-6 hidden">
+      <!-- Admin PIN Locked Screen -->
+      <div id="admin-auth-locked" class="glass-panel p-10 text-center max-w-md mx-auto space-y-5">
+        <div class="w-14 h-14 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mx-auto border border-cyan-500/30">
+          <i data-lucide="lock" class="w-7 h-7"></i>
+        </div>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Manager Authentication</h2>
+          <p class="text-xs text-slate-400 mt-1">Enter your manager PIN to access ESP32 sensor telemetry and host stand controls.</p>
+        </div>
+
+        <form onsubmit="event.preventDefault(); AdminController.login(document.getElementById('admin-pin-input').value);" class="space-y-4">
+          <div>
+            <input type="password" id="admin-pin-input" placeholder="Demo PIN: 1234" maxlength="8"
+                   class="w-full text-center text-2xl tracking-widest font-mono py-3 rounded-xl bg-slate-950 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+          </div>
+          <button type="submit" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-lg shadow-cyan-500/25 transition">
+            Unlock Admin Console
+          </button>
+          <span class="text-[11px] text-slate-500 block">Default Demo PIN is <code class="text-cyan-400 font-mono">1234</code></span>
+        </form>
+      </div>
+
+      <!-- Admin Unlocked Dashboard -->
+      <div id="admin-auth-unlocked" class="space-y-8 hidden">
+        <!-- Admin Header -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-2xl font-extrabold text-white">Manager & Sensor Operations</h2>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Authenticated</span>
+            </div>
+            <p class="text-xs text-slate-400">ESP32 telemetry diagnostics, hardware simulator, and host stand queue manager</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="AdminController.retrainAI()" class="px-3.5 py-2 rounded-xl bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition flex items-center gap-1.5" title="Retrain Machine Learning models on historical dining logs">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5 text-purple-400"></i> Retrain AI
+            </button>
+            <button onclick="document.getElementById('admin-add-table-modal')?.classList.remove('hidden')" class="px-3.5 py-2 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-300 text-xs font-semibold border border-cyan-500/30 transition flex items-center gap-1.5">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-cyan-400"></i> Add Table
+            </button>
+            <button onclick="AdminController.resetDemoDatabase()" class="px-3.5 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 text-xs font-semibold border border-rose-500/30 transition flex items-center gap-1.5">
+              <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Demo DB
+            </button>
+            <button onclick="AdminController.logout()" class="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold border border-white/10 transition">
+              Logout
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Hardware Sensor Simulator Box -->
+        <div class="glass-panel p-6 border border-cyan-500/30 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i data-lucide="cpu" class="w-5 h-5 text-cyan-400"></i> Interactive ESP32 Hardware Simulator
+              </h3>
+              <p class="text-xs text-slate-400">Trigger physical sensor events with 1-click without requiring a connected ESP32 board</p>
+            </div>
+            <span class="text-xs font-mono text-cyan-400 bg-slate-900 px-3 py-1 rounded-lg border border-white/10">
+              POST /api/v1/sensors/simulate
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 pt-2">
+            <div class="md:col-span-4">
+              <label class="text-xs text-slate-300 font-semibold block mb-1">Target Table Node</label>
+              <select id="sim-target-table-select" class="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-white/10 text-white text-xs focus:outline-none focus:border-cyan-500">
+                <!-- Populated dynamically -->
+              </select>
+            </div>
+
+            <div class="md:col-span-8 flex flex-wrap items-end gap-2 text-xs">
+              <button onclick="AdminController.triggerSelectedSim('OCCUPY')" class="px-4 py-2.5 rounded-xl bg-rose-500 hover:bg-rose-400 text-white font-bold transition flex items-center gap-1.5">
+                🚶‍♂️ Simulate Sit Down (Occupied)
+              </button>
+              <button onclick="AdminController.triggerSelectedSim('VACATE')" class="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition flex items-center gap-1.5">
+                🚶‍♀️ Simulate Vacate (Free)
+              </button>
+              <button onclick="AdminController.triggerSelectedSim('BATTERY_LOW')" class="px-3 py-2.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-semibold border border-amber-500/30 transition">
+                🪫 Low Battery (12%)
+              </button>
+              <button onclick="AdminController.triggerSelectedSim('PING')" class="px-3 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold border border-white/10 transition">
+                💓 Ping Heartbeat
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Host Stand Queue Portal -->
+        <div class="glass-panel p-6 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i data-lucide="clipboard-list" class="w-5 h-5 text-cyan-400"></i> Host Stand Waitlist Board
+              </h3>
+              <p class="text-xs text-slate-400">Call waiting guests, seat parties with auto table matching, or manage walk-ins</p>
+            </div>
+            <button onclick="AdminController.fetchQueue()" class="text-xs text-cyan-400 hover:underline">
+              Refresh Waitlist
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider">
+                  <th class="py-2.5 px-4">Ticket</th>
+                  <th class="py-2.5 px-4">Guest Info</th>
+                  <th class="py-2.5 px-4">Party Size</th>
+                  <th class="py-2.5 px-4">Section</th>
+                  <th class="py-2.5 px-4">Status</th>
+                  <th class="py-2.5 px-4">Est. Wait</th>
+                  <th class="py-2.5 px-4">Host Actions</th>
+                </tr>
+              </thead>
+              <tbody id="admin-queue-table-body">
+                <!-- Populated by admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ESP32 IoT Fleet Status Grid -->
+        <div class="glass-panel p-6 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i data-lucide="radio" class="w-5 h-5 text-cyan-400"></i> ESP32 Sensor Hardware Fleet
+              </h3>
+              <p class="text-xs text-slate-400">Battery health, signal RSSI, proximity readings, and firmware status</p>
+            </div>
+            <span class="text-xs text-emerald-400 font-mono">16 Nodes Monitored</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 text-slate-400 text-[11px] uppercase tracking-wider">
+                  <th class="py-2.5 px-4">Sensor Node</th>
+                  <th class="py-2.5 px-4">Assigned Table</th>
+                  <th class="py-2.5 px-4">State</th>
+                  <th class="py-2.5 px-4">Battery</th>
+                  <th class="py-2.5 px-4">WiFi Signal</th>
+                  <th class="py-2.5 px-4">Proximity</th>
+                  <th class="py-2.5 px-4">Last Ping</th>
+                  <th class="py-2.5 px-4">Simulate</th>
+                </tr>
+              </thead>
+              <tbody id="admin-sensors-table-body">
+                <!-- Populated by admin.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ESP32 Arduino C++ Firmware Code Viewer -->
+        <div class="glass-panel p-6 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <div>
+              <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i data-lucide="code" class="w-5 h-5 text-purple-400"></i> ESP32 Arduino C++ Firmware (<code class="text-xs text-purple-300 font-mono">dinesync_esp32.ino</code>)
+              </h3>
+              <p class="text-xs text-slate-400">Ready-to-flash C++ sketch for physical ESP32 boards with HC-SR04 ultrasonic sensors</p>
+            </div>
+            <button onclick="AdminController.copyFirmwareCode()" class="px-3 py-1.5 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 text-xs font-semibold border border-purple-500/30 transition flex items-center gap-1.5">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Firmware Code
+            </button>
+          </div>
+
+          <pre id="firmware-code-block" class="p-4 rounded-xl bg-slate-950 border border-white/10 text-slate-300 text-xs font-mono max-h-60 overflow-y-auto leading-relaxed">
+// DINESYNC ESP32 Table Node Firmware
+#include &lt;WiFi.h&gt;
+#include &lt;HTTPClient.h&gt;
+#include &lt;ArduinoJson.h&gt;
+
+const char* WIFI_SSID     = "YOUR_RESTAURANT_IOT_SSID";
+const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
+const char* SERVER_URL    = "http://192.168.1.100:8000/api/v1/sensors/telemetry";
+
+const char* SENSOR_ID     = "ESP32-NODE-04";
+const int   TABLE_NUMBER  = 4;
+const int   PIN_TRIG      = 5;
+const int   PIN_ECHO      = 18;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(PIN_TRIG, OUTPUT);
+  pinMode(PIN_ECHO, INPUT);
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+}
+
+void loop() {
+  if (WiFi.status() == WL_CONNECTED) {
+    digitalWrite(PIN_TRIG, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(PIN_TRIG, LOW);
+    long duration = pulseIn(PIN_ECHO, HIGH);
+    float distanceCm = (duration * 0.0343) / 2.0;
+    bool occupied = (distanceCm &lt; 45.0);
+
+    HTTPClient http;
+    http.begin(SERVER_URL);
+    http.addHeader("Content-Type", "application/json");
+    
+    StaticJsonDocument&lt;200&gt; doc;
+    doc["sensor_id"] = SENSOR_ID;
+    doc["table_id"] = TABLE_NUMBER;
+    doc["distance_cm"] = distanceCm;
+    doc["occupied"] = occupied;
+    doc["battery_level"] = 95;
+    doc["signal_rssi"] = WiFi.RSSI();
+    
+    String json;
+    serializeJson(doc, json);
+    http.POST(json);
+    http.end();
+  }
+  delay(3000);
+}
+          </pre>
+        </div>
+      </div>
+
+      <!-- Reservation Modal -->
+      <div id="reservation-modal" class="fixed inset-0 z-[60] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title">
+        <div class="theme-surface max-w-lg w-full rounded-2xl p-6 border border-cyan-500/30 shadow-2xl">
+          <div class="flex items-start justify-between gap-4 pb-4 border-b border-white/10">
+            <div>
+              <span class="eyebrow">Table reservation</span>
+              <h3 id="reservation-modal-title" class="text-xl font-bold text-white mt-1">Reserve your table</h3>
+              <p id="reservation-table-label" class="text-sm text-cyan-400 mt-1">Table 1 · Main Dining</p>
+              <p id="reservation-capacity-label" class="text-xs text-slate-400 mt-1">Up to 4 guests</p>
+            </div>
+            <button type="button" onclick="ReservationController.close()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300" aria-label="Close reservation dialog">
+              <i data-lucide="x" class="w-5 h-5" aria-hidden="true"></i>
+            </button>
+          </div>
+
+          <form id="reservation-form" onsubmit="ReservationController.submit(event)" class="space-y-4 pt-5 text-xs">
+            <div><label for="reservation-name" class="form-label">Full name *</label><input id="reservation-name" name="customer_name" required minlength="2" autocomplete="name" class="form-input" placeholder="e.g. Marcus Vance"></div>
+            <div class="grid grid-cols-2 gap-3"><div><label for="reservation-party-size" class="form-label">Guests *</label><select id="reservation-party-size" class="form-input"></select></div><div><label for="reservation-date" class="form-label">Date *</label><input id="reservation-date" type="date" required class="form-input"></div></div>
+            <div><label for="reservation-time" class="form-label">Arrival time *</label><input id="reservation-time" type="time" required class="form-input"></div>
+            <fieldset class="space-y-2"><legend class="form-label">Confirmation method *</legend><div class="grid grid-cols-2 gap-3"><label class="choice-card"><input type="radio" name="notification_method" value="email" checked onchange="ReservationController.toggleContactMethod()"><span><strong>Email</strong><small>Receive a clean booking receipt</small></span></label><label class="choice-card"><input type="radio" name="notification_method" value="sms" onchange="ReservationController.toggleContactMethod()"><span><strong>SMS</strong><small>Get a concise text confirmation</small></span></label></div></fieldset>
+            <div id="reservation-email-field"><label for="reservation-email" class="form-label">Email address *</label><input id="reservation-email" type="email" autocomplete="email" class="form-input" placeholder="you@example.com"></div>
+            <div id="reservation-phone-field" class="hidden"><label for="reservation-phone" class="form-label">Phone number *</label><input id="reservation-phone" type="tel" autocomplete="tel" class="form-input" placeholder="+1 555-0143"></div>
+            <button type="submit" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition">Confirm reservation</button>
+          </form>
+
+          <div id="reservation-confirmation" class="hidden pt-6 space-y-5"><div class="success-mark"><i data-lucide="check" class="w-7 h-7" aria-hidden="true"></i></div><div><h4 class="text-2xl font-extrabold text-white">Your table has been reserved.</h4><p class="text-sm text-slate-400 mt-2">We’ve secured your table and queued a confirmation to your selected contact.</p></div><div class="confirmation-list"><div><span>Table</span><strong id="reservation-confirmed-table">—</strong></div><div><span>Arrival</span><strong id="reservation-confirmed-date">—</strong></div><div><span>Booking ID</span><strong id="reservation-booking-id" class="font-mono">—</strong></div><div><span>Notification</span><strong id="reservation-confirmed-channel">—</strong></div></div><button type="button" onclick="ReservationController.close(); TablesController.closeDrawer()" class="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold border border-white/10 transition">Done</button></div>
+        </div>
+      </div>
+
+      <!-- Add Table Modal Dialog -->
+      <div id="admin-add-table-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+        <div class="glass-card max-w-md w-full p-6 border border-cyan-500/30 space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-white/10">
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+              <i data-lucide="plus-circle" class="w-5 h-5 text-cyan-400"></i> Add Restaurant Table
+            </h3>
+            <button onclick="document.getElementById('admin-add-table-modal')?.classList.add('hidden')" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300">
+              <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <form id="admin-add-table-form" onsubmit="AdminController.createTable(event)" class="space-y-3.5 text-xs">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Table Number *</label>
+                <input type="number" id="admin-new-table-num" required min="1" max="99" placeholder="e.g. 17"
+                       class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Table Name *</label>
+                <input type="text" id="admin-new-table-name" placeholder="e.g. Table 17"
+                       class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Capacity (Seats) *</label>
+                <select id="admin-new-table-capacity" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                  <option value="2">2 Guests</option>
+                  <option value="4" selected>4 Guests</option>
+                  <option value="6">6 Guests</option>
+                  <option value="8">8 Guests</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Section *</label>
+                <select id="admin-new-table-section" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                  <option value="Main Dining">Main Dining</option>
+                  <option value="Patio">Patio</option>
+                  <option value="Window View">Window View</option>
+                  <option value="Bar Lounge">Bar Lounge</option>
+                  <option value="VIP Booth">VIP Booth</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Shape</label>
+                <select id="admin-new-table-shape" class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white focus:outline-none focus:border-cyan-500">
+                  <option value="rect">Rectangle</option>
+                  <option value="circle">Circle / Round</option>
+                  <option value="booth">Booth</option>
+                </select>
+              </div>
+              <div>
+                <label class="text-slate-300 font-semibold block mb-1">Assigned ESP32 Sensor</label>
+                <input type="text" id="admin-new-table-sensor" placeholder="e.g. ESP32-NODE-17"
+                       class="w-full px-3 py-2 rounded-xl bg-slate-900 border border-white/10 text-white font-mono focus:outline-none focus:border-cyan-500">
+              </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-end gap-2">
+              <button type="button" onclick="document.getElementById('admin-add-table-modal')?.classList.add('hidden')" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold">
+                Cancel
+              </button>
+              <button type="submit" class="px-4 py-2 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold shadow-lg shadow-cyan-500/20 transition">
+                Create Table
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="mt-auto border-t border-white/10 glass-panel px-6 py-5 text-center text-xs text-slate-500">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-300">DINESYNC</span>
+        <span>• Smart Restaurant IoT & AI Occupancy Synchronization Platform</span>
+      </div>
+      <div class="flex items-center gap-4 text-slate-400">
+        <span>FastAPI + WebSockets</span>
+        <span>•</span>
+        <span>Scikit-Learn ML Engine</span>
+        <span>•</span>
+        <span>ESP32 Hardware Stream</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- JavaScript Controllers -->
+  <script src="/static/js/websocket.js"></script>
+  <script src="/static/js/dashboard.js"></script>
+  <script src="/static/js/tables.js"></script>
+  <script src="/static/js/reservations.js"></script>
+  <script src="/static/js/queue.js"></script>
+  <script src="/static/js/ai_predictions.js"></script>
+  <script src="/static/js/analytics.js"></script>
+  <script src="/static/js/admin.js"></script>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
