@@ -4,7 +4,10 @@ import os
 from datetime import datetime, timedelta
 from typing import List, Dict, Any, Optional
 
-DB_PATH = os.getenv("DATABASE_PATH", os.path.join(os.path.dirname(__file__), "dinesync.db"))
+# Vercel functions can only write to /tmp; local and Render deployments retain
+# the project-local SQLite file unless DATABASE_PATH is explicitly provided.
+DEFAULT_DB_PATH = "/tmp/dinesync.db" if os.getenv("VERCEL") else os.path.join(os.path.dirname(__file__), "dinesync.db")
+DB_PATH = os.getenv("DATABASE_PATH", DEFAULT_DB_PATH)
 # Ensure the directory for the database exists
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 DB_FILE = DB_PATH
