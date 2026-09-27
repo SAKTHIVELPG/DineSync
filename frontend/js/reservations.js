@@ -29,7 +29,9 @@ const ReservationController = {
     const now = new Date();
     const date = document.getElementById('reservation-date');
     const time = document.getElementById('reservation-time');
-    date.value = now.toISOString().slice(0, 10);
+    // Use the restaurant guest's local calendar date, not UTC (which can be
+    // yesterday after midnight in India, Australia, and other time zones).
+    date.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     date.min = date.value;
     const rounded = new Date(now.getTime() + 30 * 60 * 1000);
     rounded.setMinutes(Math.ceil(rounded.getMinutes() / 30) * 30, 0, 0);
@@ -52,6 +54,7 @@ const ReservationController = {
     if (!date || !time) return;
     const requestId = ++this.availabilityRequest;
     const card = document.getElementById('reservation-availability');
+    const submit = document.querySelector('#reservation-form button[type="submit"]');
     card.className = 'availability-card is-loading';
     card.innerHTML = '<span class="availability-dot"></span><span>Checking this table’s schedule…</span>';
     try {
@@ -63,26 +66,33 @@ const ReservationController = {
       const booked = `${result.booking_count} ${result.booking_count === 1 ? 'booking' : 'bookings'} · ${result.booked_guests} ${result.booked_guests === 1 ? 'guest' : 'guests'} already booked that day`;
       card.className = `availability-card ${result.available ? 'is-available' : 'is-busy'}`;
       card.innerHTML = `<span class="availability-dot"></span><div><strong>${result.available ? 'Available for your selected time' : 'Not available for that time'}</strong><small>${result.available ? `Your table would be held until ${result.requested_end_display}.` : `Next available: ${result.next_available_display}.`}</small><small>${booked}</small></div>`;
-      const submit = document.querySelector('#reservation-form button[type="submit"]');
       submit.disabled = !result.available;
       submit.classList.toggle('opacity-50', !result.available);
       submit.title = result.available ? '' : 'Choose a different time';
     } catch (error) {
+      this.availability = null;
+      submit.disabled = false;
       card.className = 'availability-card is-error';
-      card.innerHTML = '<span class="availability-dot"></span><span>Availability is temporarily unavailable. Please try again.</span>';
+      card.innerHTML = '<span class="availability-dot"></span><span>Availability could not be checked. Please try again.</span>';
     }
   },
 
   async submit(event) {
     event.preventDefault();
     if (!this.table) return;
+    const submit = event.currentTarget.querySelector('button[type="submit"]');
+    const errorBox = document.getElementById('reservation-form-error');
+    if (errorBox) errorBox.textContent = '';
     await this.refreshAvailability();
-    if (!this.availability?.available) {
+    if (!this.availability) {
+      if (errorBox) errorBox.textContent = 'We could not verify this time. Check your connection and try again.';
+      return;
+    }
+    if (!this.availability.available) {
       App.showToast(this.availability?.next_available_display ? `Next available: ${this.availability.next_available_display}` : 'Choose an available time.', 'error');
       return;
     }
     const form = event.currentTarget;
-    const submit = form.querySelector('button[type="submit"]');
     submit.disabled = true;
     submit.textContent = 'Confirming…';
     const method = document.querySelector('input[name="notification_method"]:checked')?.value || 'email';
@@ -105,6 +115,7 @@ const ReservationController = {
       const result = await response.json();
       if (!response.ok) {
         const detail = typeof result.detail === 'object' ? `${result.detail.message} Next available: ${result.detail.next_available_display || 'later'}.` : result.detail;
+        if (errorBox) errorBox.textContent = detail || 'We could not complete the reservation.';
         App.showToast(detail || 'We could not complete the reservation.', 'error');
         return;
       }
@@ -120,6 +131,7 @@ const ReservationController = {
       this.table = result.table;
       TablesController.fetchTables();
     } catch (error) {
+      if (errorBox) errorBox.textContent = 'Network error. Please check your connection and try again.';
       App.showToast('Network error. Your table was not reserved.', 'error');
     } finally {
       submit.disabled = false;

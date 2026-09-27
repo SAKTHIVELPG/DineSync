@@ -128,6 +128,7 @@ const TablesController = {
             <span>${t.sensor_id ? '📡' : ''}</span>
             <span>${t.section.split(' ')[0]}</span>
           </div>
+          ${t.reservation_count ? `<span class="text-[9px] font-bold text-amber-200">BOOKED ${t.reservation_count}</span>` : ''}
         </div>
       `;
     }).join('');
@@ -174,6 +175,10 @@ const TablesController = {
               <span class="text-slate-500 block">Sensor Distance</span>
               <span class="font-bold text-white">${t.sensor_distance_cm ? `${t.sensor_distance_cm} cm` : '—'}</span>
             </div>
+            <div class="col-span-2 pt-2 border-t border-white/5">
+              <span class="text-slate-500 block">Upcoming reservations</span>
+              <span class="font-bold ${t.reservation_count ? 'text-amber-300' : 'text-emerald-300'} text-sm">${t.reservation_count ? `${t.reservation_count} booking${t.reservation_count === 1 ? '' : 's'} · ${t.booked_guests} guests` : 'No upcoming bookings'}</span>
+            </div>
           </div>
 
           <button onclick="TablesController.openTableDrawer(${t.id})" 
@@ -202,6 +207,13 @@ const TablesController = {
       document.getElementById('drawer-table-capacity').innerText = `${table.capacity} Guests (${table.shape} layout)`;
       document.getElementById('drawer-table-status').innerText = table.status;
       document.getElementById('drawer-table-elapsed').innerText = table.status === 'OCCUPIED' ? `${table.elapsed_minutes || 1} minutes` : 'Table is vacant';
+      const bookingSummary = document.getElementById('drawer-booking-summary');
+      if (bookingSummary) {
+        const next = table.next_reservation_at ? new Date(table.next_reservation_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+        bookingSummary.innerHTML = table.reservation_count
+          ? `<span class="text-slate-400 block">Reservation schedule</span><strong class="text-amber-300">${table.reservation_count} booking${table.reservation_count === 1 ? '' : 's'} · ${table.booked_guests} guests booked</strong><small class="text-slate-500 block mt-1">Next: ${next || 'scheduled'}</small>`
+          : '<span class="text-slate-400 block">Reservation schedule</span><strong class="text-emerald-300">No upcoming bookings</strong>';
+      }
       
       // Sensor Telemetry
       document.getElementById('drawer-sensor-id').innerText = table.sensor_id || 'Not Linked';

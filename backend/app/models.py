@@ -65,6 +65,9 @@ class Table(TableBase):
     sensor_rssi: Optional[int] = -55
     sensor_distance_cm: Optional[float] = 120.0
     last_sensor_ping: Optional[datetime] = None
+    reservation_count: int = 0
+    booked_guests: int = 0
+    next_reservation_at: Optional[str] = None
 
 # --- Queue Models ---
 class QueueJoinRequest(BaseModel):

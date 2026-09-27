@@ -506,6 +506,11 @@
           <span id="drawer-table-elapsed" class="text-base font-semibold text-cyan-400">34 minutes</span>
         </div>
 
+        <div id="drawer-booking-summary" class="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-xs">
+          <span class="text-slate-400 block">Reservation schedule</span>
+          <strong class="text-cyan-300">No upcoming bookings</strong>
+        </div>
+
         <button id="drawer-reserve-button" type="button" onclick="ReservationController.open(TablesController.currentTableDetail); return false;"
                 class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition flex items-center justify-center gap-2">
           <i data-lucide="calendar-check" class="w-4 h-4" aria-hidden="true"></i> Reserve this table
@@ -1334,6 +1339,7 @@ void loop() {
             <fieldset class="space-y-2"><legend class="form-label">Confirmation method *</legend><div class="grid grid-cols-2 gap-3"><label class="choice-card"><input type="radio" name="notification_method" value="email" checked onchange="ReservationController.toggleContactMethod()"><span><strong>Email</strong><small>Receive a clean booking receipt</small></span></label><label class="choice-card"><input type="radio" name="notification_method" value="sms" onchange="ReservationController.toggleContactMethod()"><span><strong>SMS</strong><small>Get a concise text confirmation</small></span></label></div></fieldset>
             <div id="reservation-email-field"><label for="reservation-email" class="form-label">Email address *</label><input id="reservation-email" type="email" autocomplete="email" class="form-input" placeholder="you@example.com"></div>
             <div id="reservation-phone-field" class="hidden"><label for="reservation-phone" class="form-label">Phone number *</label><input id="reservation-phone" type="tel" autocomplete="tel" class="form-input" placeholder="+1 555-0143"></div>
+            <div id="reservation-form-error" class="min-h-0 text-xs font-semibold text-rose-300" role="alert"></div>
             <button type="submit" class="w-full py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-sm transition">Confirm reservation</button>
           </form>
 

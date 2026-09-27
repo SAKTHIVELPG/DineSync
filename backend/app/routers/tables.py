@@ -38,6 +38,15 @@ def get_tables(
     tables = []
     for r in rows:
         t_dict = dict(r)
+        booking_summary = cur.execute(
+            """SELECT COUNT(*) AS reservation_count,
+                      COALESCE(SUM(party_size), 0) AS booked_guests,
+                      MIN(start_at) AS next_reservation_at
+               FROM reservations
+               WHERE table_id = ? AND status = 'CONFIRMED' AND end_at >= ?""",
+            (r["id"], now.isoformat()),
+        ).fetchone()
+        t_dict.update(dict(booking_summary))
         if t_dict.get("status") == "OCCUPIED" and t_dict.get("occupied_since"):
             try:
                 occ_dt = datetime.fromisoformat(t_dict["occupied_since"])
@@ -94,6 +103,15 @@ def get_table_details(table_id: int):
         raise HTTPException(status_code=404, detail="Table not found")
     
     t_dict = dict(row)
+    booking_summary = cur.execute(
+        """SELECT COUNT(*) AS reservation_count,
+                  COALESCE(SUM(party_size), 0) AS booked_guests,
+                  MIN(start_at) AS next_reservation_at
+           FROM reservations
+           WHERE table_id = ? AND status = 'CONFIRMED' AND end_at >= ?""",
+        (row["id"], datetime.now().isoformat()),
+    ).fetchone()
+    t_dict.update(dict(booking_summary))
     if t_dict.get("status") == "OCCUPIED" and t_dict.get("occupied_since"):
         try:
             occ_dt = datetime.fromisoformat(t_dict["occupied_since"])
