@@ -129,6 +129,10 @@ const ReservationController = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  // The modal is declared near the legacy admin markup for source organization,
+  // but must live under body so hidden staff views cannot collapse its layout.
+  const modal = document.getElementById('reservation-modal');
+  if (modal && modal.parentElement !== document.body) document.body.appendChild(modal);
   document.getElementById('reservation-date')?.addEventListener('change', () => ReservationController.refreshAvailability());
   document.getElementById('reservation-time')?.addEventListener('change', () => ReservationController.refreshAvailability());
   document.getElementById('reservation-duration')?.addEventListener('change', () => ReservationController.refreshAvailability());
