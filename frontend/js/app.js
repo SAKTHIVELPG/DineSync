@@ -79,6 +79,8 @@ const App = {
 
   updateRoleUI() {
     const isStaff = (this.currentRole === 'admin' && AdminController.isAuthenticated);
+    document.getElementById('drawer-manual-controls')?.classList.toggle('hidden', !isStaff);
+    document.getElementById('drawer-hardware-simulator')?.classList.toggle('hidden', !isStaff);
     
     const customerNav = document.getElementById('nav-set-customer');
     const adminNav = document.getElementById('nav-set-admin');
