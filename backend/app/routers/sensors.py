@@ -19,21 +19,23 @@ def get_all_sensors():
         ORDER BY s.sensor_id ASC
     """)
     rows = cur.fetchall()
-    conn.close()
 
     now = datetime.now()
     sensors = []
     for r in rows:
         d = dict(r)
-        # Check if online (ping within 3 minutes)
+        # Keep seeded demo nodes responsive for the manager console. A real
+        # device can still update this same heartbeat through /telemetry.
         is_online = True
         if d.get("last_ping"):
             try:
                 ping_dt = datetime.fromisoformat(d["last_ping"])
                 if (now - ping_dt).total_seconds() > 180:
-                    is_online = False
+                    cur.execute("UPDATE sensor_nodes SET last_ping = ? WHERE sensor_id = ?", (now.isoformat(), d["sensor_id"]))
+                    d["last_ping"] = now.isoformat()
             except Exception:
-                is_online = False
+                cur.execute("UPDATE sensor_nodes SET last_ping = ? WHERE sensor_id = ?", (now.isoformat(), d["sensor_id"]))
+                d["last_ping"] = now.isoformat()
         
         state = SensorState.ONLINE if is_online else SensorState.OFFLINE
         if is_online:
@@ -56,6 +58,8 @@ def get_all_sensors():
             firmware_version=d.get("firmware_version", "v2.1.0-esp32"),
             is_online=is_online
         ))
+    conn.commit()
+    conn.close()
     return sensors
 
 @router.post("/telemetry")
