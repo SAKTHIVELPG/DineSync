@@ -114,8 +114,11 @@
 
       <!-- Customer Action Buttons -->
       <div id="header-customer-actions" class="flex items-center gap-2">
-        <button onclick="App.navigateTo('login')" class="px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 transition flex items-center gap-1.5">
+        <button id="header-customer-login" onclick="App.navigateTo('login')" class="px-3.5 py-2 rounded-xl bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-xs font-semibold border border-purple-500/30 transition flex items-center gap-1.5">
           <i data-lucide="lock" class="w-3.5 h-3.5 text-purple-400"></i> Staff Login
+        </button>
+        <button id="header-customer-logout" onclick="App.customerLogout()" class="hidden px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-500/30 transition flex items-center gap-1.5">
+          <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sign out
         </button>
         <button onclick="App.navigateTo('queue')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/25 transition flex items-center gap-1.5">
           <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Join Waitlist
@@ -1015,8 +1018,8 @@
         <button id="login-tab-btn-staff" onclick="App.setLoginTab('staff')" class="flex-1 py-2.5 rounded-xl bg-purple-500/20 text-purple-300 border border-purple-500/30 transition flex items-center justify-center gap-2">
           <i data-lucide="shield" class="w-4 h-4"></i> Staff / Manager Console
         </button>
-        <button id="login-tab-btn-guest" onclick="App.setLoginTab('guest')" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-2">
-          <i data-lucide="ticket" class="w-4 h-4"></i> Guest Ticket Lookup
+        <button id="login-tab-btn-guest" onclick="App.setLoginTab('customer')" class="flex-1 py-2.5 rounded-xl text-slate-400 hover:text-white transition flex items-center justify-center gap-2">
+          <i data-lucide="user-round" class="w-4 h-4"></i> Customer Dashboard
         </button>
       </div>
 
@@ -1057,34 +1060,44 @@
         </div>
       </div>
 
-      <!-- Tab Content 2: Guest / Customer Ticket Lookup -->
+      <!-- Tab Content 2: Customer Dashboard Sign-In -->
       <div id="login-tab-guest" class="glass-panel p-8 space-y-6 border border-cyan-500/30 hidden">
         <div class="flex items-center gap-4 pb-4 border-b border-white/10">
           <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center border border-cyan-500/30 shrink-0">
-            <i data-lucide="ticket" class="w-6 h-6"></i>
+            <i data-lucide="user-round-check" class="w-6 h-6"></i>
           </div>
           <div>
-            <h3 class="text-lg font-bold text-white">Find Your Live Waitlist Ticket</h3>
-            <p class="text-xs text-slate-400">Track your queue position, estimated seating time, and audio alerts</p>
+            <h3 class="text-lg font-bold text-white">Customer Dashboard Sign-In</h3>
+            <p class="text-xs text-slate-400">Sign in to reserve tables, view live seating, and manage your waitlist experience.</p>
           </div>
         </div>
 
-        <form onsubmit="event.preventDefault(); QueueController.handleLookupTicket(document.getElementById('guest-lookup-phone-input').value);" class="space-y-4">
+        <form onsubmit="event.preventDefault(); App.customerLogin(this);" class="space-y-4">
           <div>
-            <label class="text-xs font-semibold text-slate-300 block mb-1.5">Phone Number or Ticket Code *</label>
-            <input type="text" id="guest-lookup-phone-input" required placeholder="e.g. +1 555-0143 or Q-101"
+            <label class="text-xs font-semibold text-slate-300 block mb-1.5">Full name *</label>
+            <input type="text" id="customer-name-input" required minlength="2" autocomplete="name" placeholder="e.g. Marcus Vance"
+                   class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500 transition">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1.5">Email address *</label>
+            <input type="email" id="customer-email-input" required autocomplete="email" placeholder="you@example.com"
+                   class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500 transition">
+          </div>
+          <div>
+            <label class="text-xs font-semibold text-slate-300 block mb-1.5">Mobile number *</label>
+            <input type="tel" id="customer-phone-input" required autocomplete="tel" placeholder="+1 555 0143"
                    class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:border-cyan-500 transition">
           </div>
 
           <button type="submit" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-bold text-xs shadow-lg shadow-cyan-500/25 transition flex items-center justify-center gap-2">
-            <i data-lucide="search" class="w-4 h-4"></i> Retrieve & Track Live Ticket
+            <i data-lucide="arrow-right" class="w-4 h-4"></i> Continue to Customer Dashboard
           </button>
         </form>
 
         <div class="p-4 rounded-xl bg-slate-900/60 border border-white/5 text-center text-xs text-slate-400 space-y-2">
-          <p>Not currently registered on the restaurant waitlist?</p>
+          <p>Your profile is saved securely in this browser for the next visit.</p>
           <button onclick="App.navigateTo('queue')" class="text-cyan-400 hover:underline font-semibold flex items-center justify-center gap-1 mx-auto">
-            <span>Join Waitlist here</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+            <span>Continue as a guest instead</span> <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
           </button>
         </div>
       </div>
@@ -1458,4 +1471,3 @@ void loop() {
   <script src="/static/js/app.js?v=booking-fix"></script>
 </body>
 </html>
-

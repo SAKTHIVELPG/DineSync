@@ -4,6 +4,7 @@
 const App = {
   currentRoute: 'home',
   currentRole: 'customer', // 'customer' | 'admin'
+  customerSession: null,
 
   initTheme() {
     const theme = document.documentElement.dataset.theme || localStorage.getItem('dinesync_theme') || 'dark';
@@ -42,6 +43,8 @@ const App = {
     const savedToken = localStorage.getItem('dinesync_admin_token');
     if (savedToken) {
       this.currentRole = 'admin';
+    } else {
+      try { this.customerSession = JSON.parse(localStorage.getItem('dinesync_customer_session') || 'null'); } catch (_) { this.customerSession = null; }
     }
 
     // Initialize module controllers
@@ -55,11 +58,12 @@ const App = {
     this.updateRoleUI();
 
     // Check URL hash for routing
-    const hash = window.location.hash.replace('#', '') || (this.currentRole === 'admin' ? 'admin' : 'home');
+    const hash = window.location.hash.replace('#', '') || (this.currentRole === 'admin' ? 'admin' : (this.customerSession ? 'home' : 'login'));
+    if (this.currentRole === 'customer' && !this.customerSession) this.setLoginTab('customer');
     this.navigateTo(hash, false);
 
     window.addEventListener('hashchange', () => {
-      const h = window.location.hash.replace('#', '') || (this.currentRole === 'admin' ? 'admin' : 'home');
+      const h = window.location.hash.replace('#', '') || (this.currentRole === 'admin' ? 'admin' : (this.customerSession ? 'home' : 'login'));
       this.navigateTo(h, false);
     });
 
@@ -116,13 +120,14 @@ const App = {
       adminActions?.classList.remove('flex');
       customerActions?.classList.remove('hidden');
       customerActions?.classList.add('flex');
+      document.getElementById('header-customer-logout')?.classList.toggle('hidden', !this.customerSession);
 
       mobileAdmin?.classList.add('hidden');
       mobileCustomer?.classList.remove('hidden');
       mobileCustomer?.classList.add('flex');
 
       if (roleBadge) {
-        roleBadge.innerText = 'Customer Portal';
+        roleBadge.innerText = this.customerSession ? `Hi, ${this.customerSession.name.split(' ')[0]}` : 'Customer Portal';
         roleBadge.className = 'px-1.5 py-0.5 rounded text-[10px] font-bold bg-cyan-500/20 text-cyan-400 border border-cyan-500/30';
       }
       if (header) {
@@ -143,6 +148,11 @@ const App = {
 
   switchToCustomerView() {
     this.currentRole = 'customer';
+    if (!this.customerSession) {
+      this.setLoginTab('customer');
+      this.navigateTo('login');
+      return;
+    }
     this.updateRoleUI();
     this.navigateTo('home');
     this.showToast('Switched to Guest Customer View', 'info');
@@ -172,9 +182,38 @@ const App = {
     if (window.lucide) lucide.createIcons();
   },
 
+  customerLogin(form) {
+    const name = form.querySelector('#customer-name-input').value.trim();
+    const email = form.querySelector('#customer-email-input').value.trim().toLowerCase();
+    const phone = form.querySelector('#customer-phone-input').value.trim();
+    if (!name || !email || !phone) return;
+    this.customerSession = { name, email, phone, signedInAt: new Date().toISOString() };
+    localStorage.setItem('dinesync_customer_session', JSON.stringify(this.customerSession));
+    this.currentRole = 'customer';
+    this.updateRoleUI();
+    this.navigateTo('home');
+    this.showToast(`Welcome, ${name.split(' ')[0]}. Your customer dashboard is ready.`, 'success');
+  },
+
+  customerLogout() {
+    localStorage.removeItem('dinesync_customer_session');
+    this.customerSession = null;
+    this.currentRole = 'customer';
+    this.updateRoleUI();
+    this.setLoginTab('customer');
+    this.navigateTo('login');
+    this.showToast('You have been signed out.', 'info');
+  },
+
   navigateTo(route, updateHash = true) {
     const validRoutes = ['home', 'dashboard', 'tables', 'queue', 'predictions', 'analytics', 'admin', 'login'];
     if (!validRoutes.includes(route)) route = 'home';
+
+    // Entry guard: every dashboard view requires either a staff session or a customer profile.
+    if (route !== 'login' && this.currentRole !== 'admin' && !this.customerSession) {
+      this.setLoginTab('customer');
+      route = 'login';
+    }
 
     // Route Guard for Admin Console
     if (route === 'admin' && !AdminController.isAuthenticated) {
