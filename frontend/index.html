@@ -9,7 +9,10 @@
     (function () {
       const saved = localStorage.getItem('dinesync_theme');
       const prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
-      document.documentElement.dataset.theme = saved || (prefersLight ? 'light' : 'dark');
+      const theme = saved || (prefersLight ? 'light' : 'dark');
+      document.documentElement.dataset.theme = theme;
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+      document.documentElement.classList.toggle('light', theme === 'light');
     }());
   </script>
   
@@ -69,12 +72,6 @@
       <button id="nav-link-home" onclick="App.navigateTo('home')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
         <i data-lucide="home" class="w-4 h-4"></i> Home
       </button>
-      <button id="nav-link-dashboard" onclick="App.navigateTo('dashboard')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
-        <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Live Seating
-      </button>
-      <button id="nav-link-tables" onclick="App.navigateTo('tables')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
-        <i data-lucide="grid-3x3" class="w-4 h-4"></i> Floor & Tables
-      </button>
       <button id="nav-link-queue" onclick="App.navigateTo('queue')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
         <i data-lucide="ticket" class="w-4 h-4"></i> Join Waitlist
       </button>
@@ -92,7 +89,7 @@
         <i data-lucide="grid-3x3" class="w-4 h-4"></i> 2D Floor Overrides
       </button>
       <button id="nav-link-admin-analytics" onclick="App.navigateTo('analytics')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
-        <i data-lucide="line-chart" class="w-4 h-4"></i> Analytics & Reports
+        <i data-lucide="line-chart" class="w-4 h-4"></i> Operations Insights
       </button>
     </nav>
 
@@ -117,9 +114,6 @@
         <button id="header-customer-logout" onclick="App.customerLogout()" class="hidden px-3.5 py-2 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 text-xs font-semibold border border-rose-500/30 transition flex items-center gap-1.5">
           <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sign out
         </button>
-        <button onclick="App.navigateTo('queue')" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white text-xs font-bold shadow-lg shadow-cyan-500/25 transition flex items-center gap-1.5">
-          <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Join Waitlist
-        </button>
       </div>
 
       <!-- Admin Action Buttons (When Staff Logged In) -->
@@ -142,12 +136,6 @@
     <button id="nav-mobile-home" onclick="App.navigateTo('home')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
       <i data-lucide="home" class="w-4 h-4"></i><span>Home</span>
     </button>
-    <button id="nav-mobile-dashboard" onclick="App.navigateTo('dashboard')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
-      <i data-lucide="layout-dashboard" class="w-4 h-4"></i><span>Seating</span>
-    </button>
-    <button id="nav-mobile-tables" onclick="App.navigateTo('tables')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
-      <i data-lucide="grid-3x3" class="w-4 h-4"></i><span>Floor</span>
-    </button>
     <button id="nav-mobile-queue" onclick="App.navigateTo('queue')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
       <i data-lucide="ticket" class="w-4 h-4"></i><span>Waitlist</span>
     </button>
@@ -167,7 +155,7 @@
       <i data-lucide="grid-3x3" class="w-4 h-4"></i><span>Floor</span>
     </button>
     <button onclick="App.navigateTo('analytics')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
-      <i data-lucide="line-chart" class="w-4 h-4"></i><span>Analytics</span>
+      <i data-lucide="line-chart" class="w-4 h-4"></i><span>Insights</span>
     </button>
     <button onclick="AdminController.logout()" class="p-1.5 flex flex-col items-center gap-0.5 text-rose-400">
       <i data-lucide="log-out" class="w-4 h-4"></i><span>Logout</span>
@@ -192,9 +180,6 @@
           <button onclick="DashboardController.fetchAndRenderStats(); DashboardController.fetchAndRenderMiniFloor();" 
                   class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium border border-white/10 flex items-center gap-1.5 transition">
             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Refresh
-          </button>
-          <button onclick="App.navigateTo('tables')" class="px-3 py-1.5 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-xs font-bold flex items-center gap-1.5 transition">
-            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i> Interactive Floor Plan
           </button>
         </div>
       </div>
@@ -318,8 +303,8 @@
       <!-- Header & View Controls -->
       <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-extrabold text-white">Restaurant Floor Plan & Tables</h2>
-          <p class="text-xs text-slate-400">Interactive 2D spatial seating map and linked ESP32 sensor telemetry</p>
+          <h2 class="text-2xl font-extrabold text-white">Table Availability</h2>
+          <p class="text-xs text-slate-400">Check table status, bookings, and simple sensor details</p>
         </div>
 
         <!-- View Controls & Filters -->
@@ -374,7 +359,7 @@
             <span class="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Patio (Right Top)</span>
             <span class="px-2 py-0.5 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20">VIP (Right Bottom)</span>
           </div>
-          <span class="text-slate-500 italic">Click any table to view live sensor telemetry & status overrides</span>
+          <span class="text-slate-500 italic">Select a table to view availability and booking details</span>
         </div>
 
         <!-- Floor Plan Absolute Container -->
@@ -450,17 +435,17 @@
             </div>
 
             <div class="flex justify-between">
-              <span class="text-slate-400">Signal RSSI</span>
+              <span class="text-slate-400">Signal strength</span>
               <span id="drawer-sensor-rssi" class="font-mono text-white">-52 dBm (Strong)</span>
             </div>
 
             <div class="flex justify-between">
-              <span class="text-slate-400">Infrared Distance Detection</span>
+              <span class="text-slate-400">Distance</span>
               <span id="drawer-sensor-dist" class="font-bold text-cyan-400">24.5 cm (Customer Seated)</span>
             </div>
 
             <div class="flex justify-between">
-              <span class="text-slate-400">Last Telemetry Ping</span>
+              <span class="text-slate-400">Last update</span>
               <span id="drawer-sensor-ping" class="text-slate-400">Active</span>
             </div>
           </div>
@@ -845,8 +830,8 @@
     <section id="view-analytics" class="space-y-6 hidden">
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 class="text-2xl font-extrabold text-white">Historical Analytics & Reports</h2>
-          <p class="text-xs text-slate-400">Turnover velocity, wait-time accuracy, and dining session analytics</p>
+          <h2 class="text-2xl font-extrabold text-white">Operations Insights</h2>
+          <p class="text-xs text-slate-400">Track occupancy, table turnover, and guest wait performance</p>
         </div>
         <button onclick="AnalyticsController.exportCSV()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-400 font-semibold text-xs border border-cyan-500/30 transition flex items-center gap-1.5">
           <i data-lucide="download" class="w-3.5 h-3.5"></i> Export CSV Data

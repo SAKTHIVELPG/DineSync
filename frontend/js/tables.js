@@ -164,26 +164,26 @@ const TablesController = {
               <span class="font-bold text-white text-sm">${t.capacity} Guests</span>
             </div>
             <div>
-              <span class="text-slate-500 block">Occupied Duration</span>
+              <span class="text-slate-500 block">Time seated</span>
               <span class="font-bold text-white text-sm">${isOccupied ? `${t.elapsed_minutes || 1} mins` : '—'}</span>
             </div>
             <div>
-              <span class="text-slate-500 block">IoT Node</span>
+              <span class="text-slate-500 block">Sensor</span>
               <span class="font-mono text-cyan-400 text-xs">${t.sensor_id || 'Unassigned'}</span>
             </div>
             <div>
-              <span class="text-slate-500 block">Sensor Distance</span>
+              <span class="text-slate-500 block">Distance</span>
               <span class="font-bold text-white">${t.sensor_distance_cm ? `${t.sensor_distance_cm} cm` : '—'}</span>
             </div>
             <div class="col-span-2 pt-2 border-t border-white/5">
-              <span class="text-slate-500 block">Upcoming reservations</span>
+              <span class="text-slate-500 block">Bookings</span>
               <span class="font-bold ${t.reservation_count ? 'text-amber-300' : 'text-emerald-300'} text-sm">${t.reservation_count ? `${t.reservation_count} booking${t.reservation_count === 1 ? '' : 's'} · ${t.booked_guests} guests` : 'No upcoming bookings'}</span>
             </div>
           </div>
 
           <button onclick="TablesController.openTableDrawer(${t.id})" 
                   class="w-full py-2 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-white/10 transition flex items-center justify-center gap-1.5">
-            <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i> View Table Telemetry
+                <i data-lucide="info" class="w-3.5 h-3.5 text-cyan-400"></i> View table details
           </button>
         </div>
       `;

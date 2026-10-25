@@ -9,12 +9,16 @@ const App = {
   initTheme() {
     const theme = document.documentElement.dataset.theme || localStorage.getItem('dinesync_theme') || 'dark';
     document.documentElement.dataset.theme = theme;
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+    document.documentElement.classList.toggle('light', theme === 'light');
     this.updateThemeToggle(theme);
   },
 
   toggleTheme() {
     const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
     document.documentElement.dataset.theme = next;
+    document.documentElement.classList.toggle('dark', next === 'dark');
+    document.documentElement.classList.toggle('light', next === 'light');
     localStorage.setItem('dinesync_theme', next);
     this.updateThemeToggle(next);
     this.showToast(`${next === 'light' ? 'Light' : 'Dark'} theme enabled`, 'info');
