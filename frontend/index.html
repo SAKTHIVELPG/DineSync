@@ -72,6 +72,9 @@
       <button id="nav-link-home" onclick="App.navigateTo('home')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
         <i data-lucide="home" class="w-4 h-4"></i> Home
       </button>
+      <button id="nav-link-tables" onclick="App.navigateTo('tables')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
+        <i data-lucide="grid-3x3" class="w-4 h-4"></i> Floors & Tables
+      </button>
       <button id="nav-link-queue" onclick="App.navigateTo('queue')" class="px-3.5 py-2 rounded-lg hover:text-white transition flex items-center gap-1.5">
         <i data-lucide="ticket" class="w-4 h-4"></i> Join Waitlist
       </button>
@@ -135,6 +138,9 @@
   <div id="mobile-nav-customer" class="md:hidden glass-panel border-b border-white/10 px-3 py-2 flex items-center justify-around text-[11px] overflow-x-auto">
     <button id="nav-mobile-home" onclick="App.navigateTo('home')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
       <i data-lucide="home" class="w-4 h-4"></i><span>Home</span>
+    </button>
+    <button id="nav-mobile-tables" onclick="App.navigateTo('tables')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
+      <i data-lucide="grid-3x3" class="w-4 h-4"></i><span>Floors</span>
     </button>
     <button id="nav-mobile-queue" onclick="App.navigateTo('queue')" class="p-1.5 flex flex-col items-center gap-0.5 text-slate-400">
       <i data-lucide="ticket" class="w-4 h-4"></i><span>Waitlist</span>
@@ -309,6 +315,12 @@
 
         <!-- View Controls & Filters -->
         <div class="flex flex-wrap items-center gap-3">
+          <label class="flex items-center gap-2 rounded-xl bg-slate-900/80 border border-white/10 px-3 py-1.5 text-xs text-slate-400">
+            <span class="whitespace-nowrap">Restaurant</span>
+            <select id="restaurant-select" onchange="TablesController.setRestaurant(this.value)" class="bg-transparent text-slate-200 font-semibold focus:outline-none">
+              <option value="">Loading locations...</option>
+            </select>
+          </label>
           <!-- View Toggle -->
           <div class="p-1 rounded-xl bg-slate-900/80 border border-white/10 flex items-center gap-1 text-xs">
             <button id="btn-view-plan" onclick="TablesController.setView('plan')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-semibold transition">

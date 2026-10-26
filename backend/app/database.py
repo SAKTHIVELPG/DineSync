@@ -21,11 +21,22 @@ def init_db():
     conn = get_db_connection()
     cursor = conn.cursor()
 
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS restaurants (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT UNIQUE NOT NULL,
+        address TEXT NOT NULL,
+        timezone TEXT NOT NULL DEFAULT 'local',
+        is_active INTEGER NOT NULL DEFAULT 1
+    )
+    """)
+
     # Tables table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS tables (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         table_number INTEGER UNIQUE NOT NULL,
+        restaurant_id INTEGER,
         name TEXT NOT NULL,
         capacity INTEGER NOT NULL,
         section TEXT NOT NULL,
@@ -42,6 +53,27 @@ def init_db():
         last_sensor_ping TEXT
     )
     """)
+
+    table_columns = {row[1] for row in cursor.execute("PRAGMA table_info(tables)").fetchall()}
+    if "restaurant_id" not in table_columns:
+        cursor.execute("ALTER TABLE tables ADD COLUMN restaurant_id INTEGER")
+
+    cursor.execute("SELECT COUNT(*) AS count FROM restaurants")
+    if cursor.fetchone()["count"] == 0:
+        cursor.executemany(
+            "INSERT INTO restaurants (name, address, timezone) VALUES (?, ?, ?)",
+            [
+                ("DINESYNC Central", "12 Market Street", "local"),
+                ("DINESYNC Riverside", "84 River Walk", "local"),
+                ("DINESYNC Uptown", "201 North Avenue", "local"),
+            ],
+        )
+
+    restaurant_ids = [row[0] for row in cursor.execute("SELECT id FROM restaurants ORDER BY id").fetchall()]
+    if restaurant_ids:
+        unassigned = cursor.execute("SELECT id FROM tables WHERE restaurant_id IS NULL ORDER BY id").fetchall()
+        for index, row in enumerate(unassigned):
+            cursor.execute("UPDATE tables SET restaurant_id = ? WHERE id = ?", (restaurant_ids[index % len(restaurant_ids)], row[0]))
 
     # Queue table
     cursor.execute("""
@@ -162,6 +194,9 @@ def init_db():
         seed_tables_and_sensors(cursor)
         seed_queue(cursor)
         seed_historical_data(cursor)
+        restaurant_ids = [row[0] for row in cursor.execute("SELECT id FROM restaurants ORDER BY id").fetchall()]
+        for index, table_row in enumerate(cursor.execute("SELECT id FROM tables ORDER BY id").fetchall()):
+            cursor.execute("UPDATE tables SET restaurant_id = ? WHERE id = ?", (restaurant_ids[index % len(restaurant_ids)], table_row[0]))
         conn.commit()
 
     conn.close()

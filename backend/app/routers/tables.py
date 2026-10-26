@@ -2,13 +2,23 @@ from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from ..database import get_db_connection, query_db, execute_db
-from ..models import Table, TableStatus, TableSection, TableUpdate
+from ..models import Table, TableStatus, TableSection, TableUpdate, Restaurant
 from ..websocket_manager import ws_manager
 
 router = APIRouter(prefix="/api/v1/tables", tags=["Tables"])
 
+@router.get("/restaurants", response_model=List[Restaurant])
+def get_restaurants():
+    conn = get_db_connection()
+    rows = conn.execute(
+        "SELECT id, name, address, timezone, is_active FROM restaurants WHERE is_active = 1 ORDER BY id"
+    ).fetchall()
+    conn.close()
+    return [Restaurant(**dict(row)) for row in rows]
+
 @router.get("", response_model=List[Table])
 def get_tables(
+    restaurant_id: Optional[int] = None,
     section: Optional[str] = None,
     capacity: Optional[int] = None,
     status: Optional[str] = None
@@ -19,6 +29,9 @@ def get_tables(
     query = "SELECT * FROM tables WHERE 1=1"
     params = []
 
+    if restaurant_id:
+        query += " AND restaurant_id = ?"
+        params.append(restaurant_id)
     if section and section != "All":
         query += " AND section = ?"
         params.append(section)

@@ -33,11 +33,12 @@ async def create_table(req: TableCreate):
         conn.close()
         raise HTTPException(status_code=400, detail=f"Table number {req.table_number} already exists")
 
+    restaurant_id = req.restaurant_id or cur.execute("SELECT id FROM restaurants ORDER BY id LIMIT 1").fetchone()[0]
     cur.execute("""
-        INSERT INTO tables (table_number, name, capacity, section, status, sensor_id, pos_x, pos_y, shape)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO tables (table_number, restaurant_id, name, capacity, section, status, sensor_id, pos_x, pos_y, shape)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
-        req.table_number, req.name, req.capacity, req.section.value,
+        req.table_number, restaurant_id, req.name, req.capacity, req.section.value,
         req.status.value, req.sensor_id, req.pos_x or 0, req.pos_y or 0, req.shape or "rect"
     ))
     new_id = cur.lastrowid
@@ -127,6 +128,9 @@ async def reset_demo_data():
     seed_tables_and_sensors(cur)
     seed_queue(cur)
     seed_historical_data(cur)
+    restaurant_ids = [row[0] for row in cur.execute("SELECT id FROM restaurants ORDER BY id").fetchall()]
+    for index, table_row in enumerate(cur.execute("SELECT id FROM tables ORDER BY id").fetchall()):
+        cur.execute("UPDATE tables SET restaurant_id = ? WHERE id = ?", (restaurant_ids[index % len(restaurant_ids)], table_row[0]))
     conn.commit()
     conn.close()
 

@@ -3,6 +3,8 @@
  */
 const TablesController = {
   allTables: [],
+  restaurants: [],
+  selectedRestaurantId: Number(localStorage.getItem('dinesync_restaurant_id')) || null,
   selectedSection: 'All',
   selectedCapacity: 0,
   selectedStatus: 'All',
@@ -10,8 +12,33 @@ const TablesController = {
   currentTableDetail: null,
 
   async init() {
+    await this.fetchRestaurants();
     await this.fetchTables();
     this.setupListeners();
+  },
+
+  async fetchRestaurants() {
+    try {
+      const res = await fetch('/api/v1/tables/restaurants');
+      if (!res.ok) return;
+      this.restaurants = await res.json();
+      if (!this.selectedRestaurantId || !this.restaurants.some(r => r.id === this.selectedRestaurantId)) {
+        this.selectedRestaurantId = this.restaurants[0]?.id || null;
+      }
+      const select = document.getElementById('restaurant-select');
+      if (select) {
+        select.innerHTML = this.restaurants.map(r => `<option value="${r.id}">${r.name} · ${r.address}</option>`).join('');
+        if (this.selectedRestaurantId) select.value = String(this.selectedRestaurantId);
+      }
+    } catch (e) {
+      console.error('Error loading restaurants:', e);
+    }
+  },
+
+  async setRestaurant(value) {
+    this.selectedRestaurantId = Number(value) || null;
+    if (this.selectedRestaurantId) localStorage.setItem('dinesync_restaurant_id', String(this.selectedRestaurantId));
+    await this.fetchTables();
   },
 
   setupListeners() {
@@ -46,7 +73,8 @@ const TablesController = {
 
   async fetchTables() {
     try {
-      const res = await fetch('/api/v1/tables');
+      const query = this.selectedRestaurantId ? `?restaurant_id=${encodeURIComponent(this.selectedRestaurantId)}` : '';
+      const res = await fetch(`/api/v1/tables${query}`);
       if (!res.ok) return;
       this.allTables = await res.json();
       this.render();

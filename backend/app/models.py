@@ -16,6 +16,13 @@ class TableSection(str, Enum):
     BAR_LOUNGE = "Bar Lounge"
     VIP_BOOTH = "VIP Booth"
 
+class Restaurant(BaseModel):
+    id: int
+    name: str
+    address: str
+    timezone: str = "local"
+    is_active: bool = True
+
 class QueueStatus(str, Enum):
     WAITING = "WAITING"
     CALLED = "CALLED"
@@ -33,6 +40,7 @@ class SensorState(str, Enum):
 # --- Table Models ---
 class TableBase(BaseModel):
     table_number: int
+    restaurant_id: Optional[int] = None
     name: str
     capacity: int
     section: TableSection
@@ -59,6 +67,7 @@ class Table(TableBase):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    restaurant_id: Optional[int] = None
     occupied_since: Optional[datetime] = None
     elapsed_minutes: Optional[int] = 0
     sensor_battery: Optional[int] = 100
