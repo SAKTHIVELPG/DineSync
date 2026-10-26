@@ -172,7 +172,63 @@
   <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
 
     <!-- ================= VIEW 1: HOME ================= -->
-    <section id="view-home" class="space-y-8"></section>
+    <section id="view-home" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-[1.35fr_0.65fr] gap-5">
+        <div class="glass-panel rounded-2xl p-6 sm:p-8 border border-cyan-500/20 bg-gradient-to-br from-cyan-500/10 via-slate-900/60 to-slate-950/80 relative overflow-hidden">
+          <div class="absolute -right-16 -top-20 w-56 h-56 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none"></div>
+          <div class="relative space-y-5">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-cyan-300">
+              <span class="px-2.5 py-1 rounded-full bg-cyan-500/15 border border-cyan-500/25">Guest dashboard</span>
+              <span class="text-slate-500">DINESYNC Restaurant · 20 tables</span>
+            </div>
+            <div>
+              <p class="text-sm text-slate-400 mb-1">Good to see you, <span id="home-greeting-name" class="text-slate-200">guest</span>.</p>
+              <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white max-w-xl">Make your next table effortless.</h1>
+              <p class="text-sm leading-6 text-slate-400 mt-3 max-w-xl">Reserve a table, join the live waitlist, or check the floor in real time. DINESYNC keeps your visit moving from arrival to seating.</p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+              <button onclick="App.navigateTo('tables')" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 text-sm font-bold transition shadow-lg shadow-cyan-500/15">
+                <i data-lucide="calendar-check" class="w-4 h-4"></i> Find a table
+              </button>
+              <button onclick="App.navigateTo('queue')" class="inline-flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-semibold border border-white/10 transition">
+                <i data-lucide="ticket" class="w-4 h-4 text-cyan-400"></i> Join the waitlist
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="glass-card p-6 flex flex-col justify-between gap-6">
+          <div class="flex items-start justify-between">
+            <div>
+              <span class="text-[11px] uppercase tracking-[0.16em] font-bold text-slate-500">Tonight at DINESYNC</span>
+              <h2 class="text-xl font-bold text-white mt-2">Live service snapshot</h2>
+            </div>
+            <span class="flex items-center gap-1.5 text-[11px] text-emerald-300 font-semibold"><span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Live</span>
+          </div>
+          <div class="space-y-3 text-sm">
+            <div class="flex items-center justify-between py-2 border-b border-white/5"><span class="text-slate-400">Dining hours</span><span class="font-semibold text-white">11:00 AM – 11:00 PM</span></div>
+            <div class="flex items-center justify-between py-2 border-b border-white/5"><span class="text-slate-400">Reservation duration</span><span class="font-semibold text-white">1–4 hours</span></div>
+            <div class="flex items-center justify-between py-2"><span class="text-slate-400">Contact support</span><span class="font-semibold text-cyan-300">Front desk</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="glass-card p-4 border-l-4 border-l-emerald-500"><span class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Tables open</span><div id="home-stat-avail" class="text-xl font-extrabold text-white mt-2">Checking…</div><span class="text-[11px] text-emerald-300">Ready to reserve</span></div>
+        <div class="glass-card p-4 border-l-4 border-l-amber-500"><span class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Waitlist</span><div id="home-stat-queue" class="text-xl font-extrabold text-white mt-2">Checking…</div><span class="text-[11px] text-amber-300">Parties waiting</span></div>
+        <div class="glass-card p-4 border-l-4 border-l-cyan-500"><span class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Estimated wait</span><div id="home-stat-wait" class="text-xl font-extrabold text-white mt-2">Checking…</div><span class="text-[11px] text-cyan-300">For a party of 2</span></div>
+        <div class="glass-card p-4 border-l-4 border-l-purple-500"><span class="text-[11px] uppercase tracking-wider text-slate-500 font-bold">Infrared network</span><div id="home-stat-sensors" class="text-xl font-extrabold text-white mt-2">Checking…</div><span class="text-[11px] text-purple-300">Table signals online</span></div>
+      </div>
+
+      <div class="flex items-end justify-between gap-4">
+        <div><h2 class="text-xl font-bold text-white">Plan your visit</h2><p class="text-sm text-slate-400 mt-1">Everything you need before you arrive.</p></div>
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-xs text-slate-500"><i data-lucide="shield-check" class="w-3.5 h-3.5 text-emerald-400"></i> Live data from the floor</span>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <button onclick="App.navigateTo('tables')" class="glass-card p-5 text-left hover:border-cyan-500/40 transition group"><span class="w-10 h-10 rounded-xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-4"><i data-lucide="layout-grid" class="w-5 h-5"></i></span><h3 class="text-base font-bold text-white group-hover:text-cyan-300 transition">Browse the floor</h3><p class="text-xs leading-5 text-slate-400 mt-2">See every table’s live state, capacity, infrared signal, and upcoming reservations.</p><span class="inline-flex items-center gap-1 text-xs text-cyan-300 font-semibold mt-4">View tables <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span></button>
+        <button onclick="App.navigateTo('queue')" class="glass-card p-5 text-left hover:border-amber-500/40 transition group"><span class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-300 flex items-center justify-center mb-4"><i data-lucide="ticket" class="w-5 h-5"></i></span><h3 class="text-base font-bold text-white group-hover:text-amber-300 transition">Join the waitlist</h3><p class="text-xs leading-5 text-slate-400 mt-2">Get a digital ticket and watch your place move forward with live table turnover.</p><span class="inline-flex items-center gap-1 text-xs text-amber-300 font-semibold mt-4">Get a ticket <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span></button>
+        <button onclick="App.navigateTo('predictions')" class="glass-card p-5 text-left hover:border-purple-500/40 transition group"><span class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-300 flex items-center justify-center mb-4"><i data-lucide="sparkles" class="w-5 h-5"></i></span><h3 class="text-base font-bold text-white group-hover:text-purple-300 transition">Check the estimator</h3><p class="text-xs leading-5 text-slate-400 mt-2">Choose your party size and section to see the current data-backed wait forecast.</p><span class="inline-flex items-center gap-1 text-xs text-purple-300 font-semibold mt-4">See forecast <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i></span></button>
+      </div>
+    </section>
 
     <!-- ================= VIEW 2: LIVE DASHBOARD ================= -->
     <section id="view-dashboard" class="space-y-6 hidden">

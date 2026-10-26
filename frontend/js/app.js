@@ -94,6 +94,8 @@ const App = {
     const mobileCustomer = document.getElementById('mobile-nav-customer');
     const mobileAdmin = document.getElementById('mobile-nav-admin');
     const header = document.getElementById('main-header');
+    const homeGreeting = document.getElementById('home-greeting-name');
+    if (homeGreeting) homeGreeting.innerText = this.customerSession?.name?.split(' ')[0] || 'guest';
 
     if (isStaff) {
       customerNav?.classList.add('hidden');
