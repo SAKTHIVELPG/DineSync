@@ -60,20 +60,17 @@ def init_db():
 
     cursor.execute("SELECT COUNT(*) AS count FROM restaurants")
     if cursor.fetchone()["count"] == 0:
-        cursor.executemany(
+        cursor.execute(
             "INSERT INTO restaurants (name, address, timezone) VALUES (?, ?, ?)",
-            [
-                ("DINESYNC Central", "12 Market Street", "local"),
-                ("DINESYNC Riverside", "84 River Walk", "local"),
-                ("DINESYNC Uptown", "201 North Avenue", "local"),
-            ],
+            ("DINESYNC Restaurant", "12 Market Street", "local"),
         )
-
-    restaurant_ids = [row[0] for row in cursor.execute("SELECT id FROM restaurants ORDER BY id").fetchall()]
-    if restaurant_ids:
-        unassigned = cursor.execute("SELECT id FROM tables WHERE restaurant_id IS NULL ORDER BY id").fetchall()
-        for index, row in enumerate(unassigned):
-            cursor.execute("UPDATE tables SET restaurant_id = ? WHERE id = ?", (restaurant_ids[index % len(restaurant_ids)], row[0]))
+    canonical_restaurant = cursor.execute("SELECT id FROM restaurants ORDER BY id LIMIT 1").fetchone()[0]
+    cursor.execute(
+        "UPDATE restaurants SET name = ?, address = ?, is_active = 1 WHERE id = ?",
+        ("DINESYNC Restaurant", "12 Market Street", canonical_restaurant),
+    )
+    cursor.execute("UPDATE tables SET restaurant_id = ? WHERE restaurant_id IS NULL OR restaurant_id != ?", (canonical_restaurant, canonical_restaurant))
+    cursor.execute("DELETE FROM restaurants WHERE id != ?", (canonical_restaurant,))
 
     # Queue table
     cursor.execute("""
@@ -194,12 +191,36 @@ def init_db():
         seed_tables_and_sensors(cursor)
         seed_queue(cursor)
         seed_historical_data(cursor)
-        restaurant_ids = [row[0] for row in cursor.execute("SELECT id FROM restaurants ORDER BY id").fetchall()]
-        for index, table_row in enumerate(cursor.execute("SELECT id FROM tables ORDER BY id").fetchall()):
-            cursor.execute("UPDATE tables SET restaurant_id = ? WHERE id = ?", (restaurant_ids[index % len(restaurant_ids)], table_row[0]))
+        cursor.execute("UPDATE tables SET restaurant_id = ? WHERE restaurant_id IS NULL", (canonical_restaurant,))
         conn.commit()
 
+    cursor.execute("UPDATE tables SET restaurant_id = ? WHERE restaurant_id IS NULL", (canonical_restaurant,))
+    ensure_twenty_tables(cursor, canonical_restaurant)
+    conn.commit()
+
     conn.close()
+
+def ensure_twenty_tables(cursor, restaurant_id):
+    additional_tables = [
+        (17, "Table 17", 2, "Window View", "AVAILABLE", "ESP32-NODE-17", 50, 450, "circle"),
+        (18, "Table 18", 4, "Main Dining", "AVAILABLE", "ESP32-NODE-18", 400, 330, "rect"),
+        (19, "Table 19", 6, "Patio", "AVAILABLE", "ESP32-NODE-19", 720, 290, "rect"),
+        (20, "Table 20", 8, "VIP Booth", "AVAILABLE", "ESP32-NODE-20", 720, 470, "booth"),
+    ]
+    now = datetime.now().isoformat()
+    for table_number, name, capacity, section, status, sensor_id, pos_x, pos_y, shape in additional_tables:
+        if cursor.execute("SELECT 1 FROM tables WHERE table_number = ?", (table_number,)).fetchone():
+            continue
+        cursor.execute(
+            """INSERT INTO tables (table_number, restaurant_id, name, capacity, section, status, sensor_id, pos_x, pos_y, shape, last_sensor_ping)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (table_number, restaurant_id, name, capacity, section, status, sensor_id, pos_x, pos_y, shape, now),
+        )
+        cursor.execute(
+            """INSERT OR IGNORE INTO sensor_nodes (sensor_id, table_id, battery_level, signal_rssi, distance_cm, state, last_ping)
+               VALUES (?, (SELECT id FROM tables WHERE table_number = ?), 95, -52, 120.0, 'VACANT', ?)""",
+            (sensor_id, table_number, now),
+        )
 
 def seed_tables_and_sensors(cursor):
     initial_tables = [

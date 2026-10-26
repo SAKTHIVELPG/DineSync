@@ -211,6 +211,7 @@ async def create_reservation(request: ReservationRequest):
         conn.close()
 
     await ws_manager.broadcast_table_update(updated_table)
+    await ws_manager.broadcast_reservation_update(request.table_id)
     await ws_manager.broadcast_stats_refresh()
     return {
         "message": "Your table has been reserved.",

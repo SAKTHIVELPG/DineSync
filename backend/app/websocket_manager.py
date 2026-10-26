@@ -42,6 +42,12 @@ class ConnectionManager:
             "data": table
         })
 
+    async def broadcast_reservation_update(self, table_id: int):
+        await self.broadcast({
+            "type": "RESERVATION_UPDATE",
+            "data": {"table_id": table_id}
+        })
+
     async def broadcast_queue_update(self, event_type: str, queue_item: Optional[Dict[str, Any]] = None):
         await self.broadcast({
             "type": "QUEUE_UPDATE",

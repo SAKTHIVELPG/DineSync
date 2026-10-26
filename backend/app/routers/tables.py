@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
-from datetime import datetime
+from datetime import datetime, timedelta
+import math
 from ..database import get_db_connection, query_db, execute_db
 from ..models import Table, TableStatus, TableSection, TableUpdate, Restaurant
 from ..websocket_manager import ws_manager
@@ -15,6 +16,42 @@ def get_restaurants():
     ).fetchall()
     conn.close()
     return [Restaurant(**dict(row)) for row in rows]
+
+@router.get("/{table_id}/reservations")
+def get_table_reservation_queue(table_id: int):
+    conn = get_db_connection()
+    table = conn.execute("SELECT * FROM tables WHERE id = ? OR table_number = ?", (table_id, table_id)).fetchone()
+    if not table:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Table not found")
+    now = datetime.now()
+    rows = conn.execute(
+        """SELECT booking_id, party_size, reservation_date, reservation_time,
+                  start_at, end_at, status
+           FROM reservations
+           WHERE table_id = ? AND status = 'CONFIRMED' AND end_at >= ?
+           ORDER BY start_at ASC""",
+        (table["id"], now.isoformat()),
+    ).fetchall()
+    queue = [dict(row) for row in rows]
+    next_start = datetime.fromisoformat(queue[0]["start_at"]) if queue else None
+    if table["status"] == "OCCUPIED":
+        wait_until = now + timedelta(minutes=90)
+    elif table["status"] == "RESERVED":
+        wait_until = now + timedelta(hours=2)
+    elif table["status"] == "CLEANING":
+        wait_until = now + timedelta(minutes=30)
+    else:
+        wait_until = now
+    if next_start and next_start > wait_until:
+        wait_until = next_start
+    wait_minutes = max(0, math.ceil((wait_until - now).total_seconds() / 60))
+    conn.close()
+    return {
+        "table_id": table["id"],
+        "wait_time_minutes": wait_minutes,
+        "reservations": queue,
+    }
 
 @router.get("", response_model=List[Table])
 def get_tables(

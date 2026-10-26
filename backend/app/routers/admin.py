@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, List
 import uuid
-from ..database import get_db_connection, seed_tables_and_sensors, seed_queue, seed_historical_data
+from ..database import get_db_connection, seed_tables_and_sensors, seed_queue, seed_historical_data, ensure_twenty_tables
 from ..models import AdminLoginRequest, AdminLoginResponse, TableCreate, TableUpdate, AITrainResponse
 from ..ai_engine import ai_engine
 from ..websocket_manager import ws_manager
@@ -128,9 +128,9 @@ async def reset_demo_data():
     seed_tables_and_sensors(cur)
     seed_queue(cur)
     seed_historical_data(cur)
-    restaurant_ids = [row[0] for row in cur.execute("SELECT id FROM restaurants ORDER BY id").fetchall()]
-    for index, table_row in enumerate(cur.execute("SELECT id FROM tables ORDER BY id").fetchall()):
-        cur.execute("UPDATE tables SET restaurant_id = ? WHERE id = ?", (restaurant_ids[index % len(restaurant_ids)], table_row[0]))
+    restaurant_id = cur.execute("SELECT id FROM restaurants ORDER BY id LIMIT 1").fetchone()[0]
+    cur.execute("UPDATE tables SET restaurant_id = ? WHERE restaurant_id IS NULL", (restaurant_id,))
+    ensure_twenty_tables(cur, restaurant_id)
     conn.commit()
     conn.close()
 

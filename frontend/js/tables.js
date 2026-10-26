@@ -3,8 +3,6 @@
  */
 const TablesController = {
   allTables: [],
-  restaurants: [],
-  selectedRestaurantId: Number(localStorage.getItem('dinesync_restaurant_id')) || null,
   selectedSection: 'All',
   selectedCapacity: 0,
   selectedStatus: 'All',
@@ -12,33 +10,8 @@ const TablesController = {
   currentTableDetail: null,
 
   async init() {
-    await this.fetchRestaurants();
     await this.fetchTables();
     this.setupListeners();
-  },
-
-  async fetchRestaurants() {
-    try {
-      const res = await fetch('/api/v1/tables/restaurants');
-      if (!res.ok) return;
-      this.restaurants = await res.json();
-      if (!this.selectedRestaurantId || !this.restaurants.some(r => r.id === this.selectedRestaurantId)) {
-        this.selectedRestaurantId = this.restaurants[0]?.id || null;
-      }
-      const select = document.getElementById('restaurant-select');
-      if (select) {
-        select.innerHTML = this.restaurants.map(r => `<option value="${r.id}">${r.name} · ${r.address}</option>`).join('');
-        if (this.selectedRestaurantId) select.value = String(this.selectedRestaurantId);
-      }
-    } catch (e) {
-      console.error('Error loading restaurants:', e);
-    }
-  },
-
-  async setRestaurant(value) {
-    this.selectedRestaurantId = Number(value) || null;
-    if (this.selectedRestaurantId) localStorage.setItem('dinesync_restaurant_id', String(this.selectedRestaurantId));
-    await this.fetchTables();
   },
 
   setupListeners() {
@@ -57,6 +30,14 @@ const TablesController = {
       }
     });
 
+    window.addEventListener('dinesync:reservation_update', (e) => {
+      const tableId = e.detail?.data?.table_id;
+      if (this.currentTableDetail && (!tableId || this.currentTableDetail.id === tableId)) {
+        this.openTableDrawer(this.currentTableDetail.id, false);
+      }
+      this.fetchTables();
+    });
+
     window.addEventListener('dinesync:sensor_telemetry', (e) => {
       const tel = e.detail.data;
       const tbl = this.allTables.find(t => t.sensor_id === tel.sensor_id || t.id === tel.table_id);
@@ -73,8 +54,7 @@ const TablesController = {
 
   async fetchTables() {
     try {
-      const query = this.selectedRestaurantId ? `?restaurant_id=${encodeURIComponent(this.selectedRestaurantId)}` : '';
-      const res = await fetch(`/api/v1/tables${query}`);
+      const res = await fetch('/api/v1/tables');
       if (!res.ok) return;
       this.allTables = await res.json();
       this.render();
@@ -226,6 +206,7 @@ const TablesController = {
       if (!res.ok) return;
       const table = await res.json();
       this.currentTableDetail = table;
+      await this.loadReservationQueue(table.id);
 
       const drawer = document.getElementById('table-detail-drawer');
       if (!drawer) return;
@@ -272,6 +253,35 @@ const TablesController = {
 
     } catch (e) {
       console.error('Error opening table drawer:', e);
+    }
+  },
+
+  async loadReservationQueue(tableId) {
+    const queueContainer = document.getElementById('drawer-reservation-queue');
+    const waitLabel = document.getElementById('drawer-reservation-wait');
+    if (!queueContainer || !waitLabel) return;
+    try {
+      const res = await fetch(`/api/v1/tables/${tableId}/reservations`);
+      if (!res.ok) throw new Error('Queue unavailable');
+      const payload = await res.json();
+      const wait = Number(payload.wait_time_minutes || 0);
+      waitLabel.textContent = wait > 0 ? `${wait} min${wait === 1 ? '' : 's'}` : 'Available now';
+      if (!payload.reservations?.length) {
+        queueContainer.innerHTML = '<span class="text-slate-500">No upcoming reservations for this table.</span>';
+        return;
+      }
+      queueContainer.innerHTML = payload.reservations.map((reservation, index) => {
+        const when = new Date(reservation.start_at).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+        const end = new Date(reservation.end_at).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+        return `<div class="flex items-center justify-between gap-3 rounded-lg bg-slate-950/50 border border-white/5 px-3 py-2">
+          <span class="text-slate-500 font-mono">#${index + 1}</span>
+          <span class="text-slate-200 font-semibold flex-1">${reservation.party_size} guest${reservation.party_size === 1 ? '' : 's'}</span>
+          <span class="text-right text-amber-200">${when}<small class="block text-slate-500">until ${end}</small></span>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      waitLabel.textContent = 'Unavailable';
+      queueContainer.innerHTML = '<span class="text-rose-300">Reservation queue is temporarily unavailable.</span>';
     }
   },
 

@@ -315,12 +315,11 @@
 
         <!-- View Controls & Filters -->
         <div class="flex flex-wrap items-center gap-3">
-          <label class="flex items-center gap-2 rounded-xl bg-slate-900/80 border border-white/10 px-3 py-1.5 text-xs text-slate-400">
-            <span class="whitespace-nowrap">Restaurant</span>
-            <select id="restaurant-select" onchange="TablesController.setRestaurant(this.value)" class="bg-transparent text-slate-200 font-semibold focus:outline-none">
-              <option value="">Loading locations...</option>
-            </select>
-          </label>
+          <span class="flex items-center gap-2 rounded-xl bg-slate-900/80 border border-white/10 px-3 py-1.5 text-xs text-slate-400">
+            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-cyan-400"></i>
+            <span class="font-semibold text-slate-200">DINESYNC Restaurant</span>
+            <span>· 20 tables</span>
+          </span>
           <!-- View Toggle -->
           <div class="p-1 rounded-xl bg-slate-900/80 border border-white/10 flex items-center gap-1 text-xs">
             <button id="btn-view-plan" onclick="TablesController.setView('plan')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 font-semibold transition">
@@ -419,6 +418,22 @@
         <div id="drawer-booking-summary" class="p-4 rounded-xl bg-cyan-500/5 border border-cyan-500/20 text-xs">
           <span class="text-slate-400 block">Reservation schedule</span>
           <strong class="text-cyan-300">No upcoming bookings</strong>
+        </div>
+
+        <div class="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-xs text-slate-400 block">Reservation wait time</span>
+              <strong id="drawer-reservation-wait" class="text-lg text-amber-300">Available now</strong>
+            </div>
+            <i data-lucide="clock-3" class="w-5 h-5 text-amber-300"></i>
+          </div>
+          <div>
+            <span class="text-xs text-slate-400 block mb-2">Upcoming queue for this table</span>
+            <div id="drawer-reservation-queue" class="space-y-2 text-xs">
+              <span class="text-slate-500">Loading reservation queue…</span>
+            </div>
+          </div>
         </div>
 
         <button id="drawer-reserve-button" type="button" onclick="ReservationController.open(TablesController.currentTableDetail); return false;"
